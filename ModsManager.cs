@@ -15,13 +15,13 @@ namespace Game
 		public string ScVersion;
 		public string Url;
 		public string UpdateUrl;
-		public string[] AuthorList;
+		public string AuthorList;
 		public string Credits;
 		public string Logo;
-		public string[] Screenshots;
+		public string Screenshots;
 		public string Parent;
-		public string[] Dependency;
-		public string[] Dependants;
+		public string Dependency;
+		public string Dependants;
 		public bool UseDependencyInfo;
 		public ModInfo(
 			string name,
@@ -30,13 +30,13 @@ namespace Game
 			string scversion,
 			string url,
 			string updateUrl,
-			string[] authorList,
+			string authorList,
 			string credits,
 			string logo,
-			string[] screenshots,
+			string screenshots,
 			string parent,
-			string[] dependency,
-			string[] dependants = null,
+			string dependency,
+			string dependants = null,
 			bool usedependencyInfo = false)
 			{
 				Name = name;
@@ -87,7 +87,7 @@ namespace Game
 			get { return index; }
 		}
 		public ModInfo ModInfo{ get{ return info ;} }
-		public PluginLoaderAttribute(string name, string description, uint version, string scversion, string url, string updateUrl, string[] authorList, string credits, string logo, string[] screenshots, string parent, string[] dependency, int index = 0, string[] dependants = null, bool usedependencyInfo = false)
+		public PluginLoaderAttribute(string name, string description, uint version, string scversion, string url, string updateUrl, string authorList, string credits, string logo, string screenshots, string parent, string dependency = null, int index = 0, string dependants = null, bool usedependencyInfo = false)
 		{
 			this.info = new ModInfo(name, description, version, scversion, url, updateUrl, authorList, credits, logo, screenshots, parent, dependency, dependants, usedependencyInfo);
 			this.index = index;
@@ -101,7 +101,6 @@ namespace Game
 			this.index = index;
 		}
 	}
-
 	public static class ModsManager
 	{
 		private static List<Assembly> loadedAssemblies = new List<Assembly>();
