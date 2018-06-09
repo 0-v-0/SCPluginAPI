@@ -71,10 +71,10 @@ namespace Game
 		{
 			return string.Format("{0} {1} - {2} ({3})", new object[]
 			{
-				this.Name,
-				this.Version,
-				this.Description,
-				this.Url
+				Name,
+				Version,
+				Description,
+				Url
 			});
 		}
 	}
@@ -82,35 +82,35 @@ namespace Game
 	public class PluginLoaderAttribute : Attribute
 	{
 		protected ModInfo info;
-		protected int index;
-		public int Index {
-			get { return index; }
-		}
-		public ModInfo ModInfo{ get{ return info ;} }
-		public PluginLoaderAttribute(string name, string description, uint version, string scversion, string url, string updateUrl, string authorList, string credits, string logo, string screenshots, string parent, string dependency = null, int index = 0, string dependants = null, bool usedependencyInfo = false)
+		public ModInfo ModInfo{ get{ return info; } }
+		public PluginLoaderAttribute(string name, string description, uint version, string scversion, string url, string updateUrl, string authorList, string credits, string logo, string screenshots, string parent, string dependency = null, string dependants = null, bool usedependencyInfo = false)
 		{
-			this.info = new ModInfo(name, description, version, scversion, url, updateUrl, authorList, credits, logo, screenshots, parent, dependency, dependants, usedependencyInfo);
-			this.index = index;
+			info = new ModInfo(name, description, version, scversion, url, updateUrl, authorList, credits, logo, screenshots, parent, dependency, dependants, usedependencyInfo);
 		}
 
-		public PluginLoaderAttribute(string name, string description, uint version, int index)
+		public PluginLoaderAttribute(string name, string description, uint version)
 		{
-			this.info.Name = name;
-			this.info.Description = description;
-			this.info.Version = version;
-			this.index = index;
+			info.Name = name;
+			info.Description = description;
+			info.Version = version;
 		}
 	}
 	public static class ModsManager
 	{
-		private static List<Assembly> loadedAssemblies = new List<Assembly>();
-		private static Dictionary<string, int> loadedMods = new Dictionary<string, int>();
-		private static List<string> assembliesList;
+		static List<Assembly> loadedAssemblies = new List<Assembly>();
+		static List<ModInfo> loadedMods = new List<ModInfo>();
+		static string extension;
 
-		public static List<string> DisabledMods;
+		public static HashSet<string> DisabledMods = new HashSet<string>();
+		public static ReadOnlyList<string> AssembliesList;
 
-		private static int loadedModCount;
-
+		public static ReadOnlyList<ModInfo> LoadedMods
+		{
+			get
+			{
+				return new ReadOnlyList<ModInfo>(ModsManager.loadedMods);
+			}
+		}
 		public static ReadOnlyList<Assembly> LoadedAssemblies
 		{
 			get
@@ -119,38 +119,11 @@ namespace Game
 			}
 		}
 
-		public static Dictionary<string, int> LoadedMods
-		{
-			get
-			{
-				return ModsManager.loadedMods;
-			}
-		}
-
-		public static ReadOnlyList<string> AssemblyNames
-		{
-			get
-			{
-				return new ReadOnlyList<string>(ModsManager.assembliesList);
-			}
-		}
-
 		public static void Initialize()
 		{
-			ModsManager.LoadMods();
-		}
-
-		public static bool IsAssembly(string name)
-		{
-			return Storage.GetExtension(name).Equals(".dll", StringComparison.OrdinalIgnoreCase);
-		}
-
-		public static void LoadMods()
-		{
-			ModsManager.UpdateAssembliesList();
 			try
 			{
-				foreach (string current in ModsManager.assembliesList)
+				foreach (string current in (AssembliesList = new ReadOnlyList<string>(ModsManager.GetFiles(".dll"))))
 				{
 					try
 					{
@@ -174,7 +147,6 @@ namespace Game
 
 		public static void LoadMod(Assembly asm)
 		{
-			Type delegateType = typeof(Action);
 			Type attr = typeof(PluginLoaderAttribute);
 			ModsManager.loadedAssemblies.Add(asm);
 			Type[] types = asm.GetTypes();
@@ -183,23 +155,29 @@ namespace Game
 				PluginLoaderAttribute pluginLoaderAttribute = (PluginLoaderAttribute)Attribute.GetCustomAttribute(types[i], attr);
 				if (pluginLoaderAttribute != null)
 				{
-					ModInfo modInfo = pluginLoaderAttribute.ModInfo;
-					if (!ModsManager.DisabledMods.Contains(modInfo.Name))
+					ModInfo modInfo;
+					if (!ModsManager.DisabledMods.Contains((modInfo = pluginLoaderAttribute.ModInfo).Name))
 					{
-						var c = types[i].GetMethods(BindingFlags.Static)[pluginLoaderAttribute.Index];
-						if (c != null)
+						MethodInfo c;
+						if ((c = types[i].GetMethod("Initialize", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)) != null)
 						{
-							c.Invoke(null, null);
-							ModsManager.loadedMods.Add(modInfo.Name, ModsManager.loadedModCount++);
+							c.Invoke(Activator.CreateInstance(types[i]), null);
+							ModsManager.loadedMods.Add(modInfo);
 						}
 					}
 				}
 			}
 		}
 
-		public static void UpdateAssembliesList()
+		public static bool IsTargetFile(string name)
 		{
-			ModsManager.assembliesList = new List<string>(Directory.EnumerateFiles(ContentManager.Path).Where(new Func<string, bool>(ModsManager.IsAssembly)));
+			return Storage.GetExtension(name).Equals(extension, StringComparison.OrdinalIgnoreCase);
+		}
+
+		public static List<string> GetFiles(string ext)
+		{
+			extension = ext;
+			return new List<string>(Directory.EnumerateFiles(ContentManager.Path).Where(new Func<string, bool>(ModsManager.IsTargetFile)));
 		}
 	}
 }
