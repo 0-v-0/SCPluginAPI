@@ -312,11 +312,11 @@ namespace SCInjector
 			string s = method.Name;
 			return method.IsFamily || method.IsPublic && !s.StartsWith("add_") && !s.StartsWith("remove_");
 		}
-		static bool isGet(MethodDefinition t)
+		static bool isGet(IMethodSignature t)
 		{
 			return t.Parameters.Count == 2;
 		}
-		static bool isTarget(TypeDefinition t)
+		static bool isTarget(TypeReference t)
 		{
 			if (t.Namespace.Length != 4) //if (t.Namespace != "Game")
 			{
@@ -367,7 +367,7 @@ namespace SCInjector
 				var typenames = ("Block,BlocksManager,CharacterSkinsManager,CraftingRecipesManager,DatabaseManager,"+
 					"DialogsManager,ExternalContentManager,LightingManager,GameManager,MotdManager,MusicManager,PlantsManager,"+
 					"PlayerData,SimplexNoise,StringsManager,TerrainUpdater,TerrainContentsGenerator,InventorySlotWidget"
-					).Split(new char[]{','});
+					).Split(new []{','});
 				for (int i = 0; i < typenames.Length; i++)
 				{
 					/*int index;
@@ -382,7 +382,7 @@ namespace SCInjector
 					p.Apply(types.FindType(typenames[i]).Methods);
 				}
 				TypeReference type;
-				p.Apply(new MethodDefinition[]
+				p.Apply(new []
 				{
 					types.FindType("ContentManager").Methods.First(isGet),
 					types.FindMethod("AudioManager", "PlaySound", out type),
@@ -395,7 +395,7 @@ namespace SCInjector
 				File.WriteAllText("methods.txt", p.Lst.ToString());
 			}
 			else types = asmDef.MainModule.Types;
-			PluginPatch.Optimize(types);
+			//PluginPatch.Optimize(types);
 			using (stream = File.OpenWrite("output_" + Path.GetFileName(args[0])))
 			{
 				asmDef.Write(stream);

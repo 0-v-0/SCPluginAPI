@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+
 namespace Game
 {
 	[Serializable]
@@ -57,15 +58,19 @@ namespace Game
 
 		public override bool Equals(object obj)
 		{
-			return obj is ModInfo && this.ToString() == ((ModInfo)obj).ToString();
+			return obj is ModInfo && ToString() == ((ModInfo)obj).ToString();
 		}
 		public bool Equals(ModInfo other)
 		{
-			return this.ToString() == other.ToString();
+			return ToString() == other.ToString();
 		}
+		//public bool IsNewerThan(ModInfo other)
+		//{
+		//	return this.Name == other.Name && this.Version > other.Version;
+		//}
 		public override int GetHashCode()
 		{
-			return this.ToString().GetHashCode();
+			return ToString().GetHashCode();
 		}
 		public override string ToString()
 		{
@@ -97,11 +102,11 @@ namespace Game
 	}
 	public static class ModsManager
 	{
-		static List<Assembly> loadedAssemblies = new List<Assembly>();
-		static List<ModInfo> loadedMods = new List<ModInfo>();
+		static List<Assembly> loadedAssemblies;
+		static List<ModInfo> loadedMods;
 		static string extension;
 
-		public static HashSet<string> DisabledMods = new HashSet<string>();
+		public static HashSet<string> DisabledMods;
 		public static ReadOnlyList<string> AssembliesList;
 
 		public static ReadOnlyList<ModInfo> LoadedMods
@@ -121,51 +126,107 @@ namespace Game
 
 		public static void Initialize()
 		{
+			loadedAssemblies = new List<Assembly>();
+			loadedMods = new List<ModInfo>();
+			DisabledMods = new HashSet<string>();
 			try
 			{
-				foreach (string current in (AssembliesList = new ReadOnlyList<string>(ModsManager.GetFiles(".dll"))))
+				if (File.Exists("mods.cfg"))
+					using (var reader = new StreamReader(Path.Combine(ContentManager.Path, "mods.cfg")))
+					{
+						var line = reader.ReadLine();
+						while (line != "FullName\tLastModify" && line != null)
+						{
+							DisabledMods.Add(line);
+						}
+					}
+				var enumerator = (AssembliesList = new ReadOnlyList<string>(GetFiles(".dll"))).GetEnumerator();
+				while (enumerator.MoveNext())
 				{
 					try
 					{
-						ModsManager.LoadMod(Assembly.LoadFrom(current, null));
-						Log.Information("Loaded Mod \"{0}\"", new object[]
-						{
-							current
-						});
+						LoadMod(Assembly.LoadFrom(enumerator.Current, null));
 					}
 					catch (Exception ex)
 					{
-						Log.Warning(string.Format("Mod \"{0}\" could not be loaded. Reason: {1}", current, ex.Message));
+						Log.Warning(string.Format("Loading mod \"{0}\" failed: {1}", enumerator.Current.Substring(ContentManager.Path.Length), ex.Message));
 					}
 				}
+				Log.Information("Loaded {0} dlls ({1} mods)", AssembliesList.Count, loadedMods.Count);
+				SaveConfig("mods.cfg");
 			}
 			catch (Exception e)
 			{
-				ExceptionManager.ReportExceptionToUser("Loading Mods failed.", e);
+				ExceptionManager.ReportExceptionToUser("Loading mods failed.", e);
 			}
 		}
 
 		public static void LoadMod(Assembly asm)
 		{
+			if(DisabledMods.Contains(asm.ToString()))
+				return;
 			Type attr = typeof(PluginLoaderAttribute);
-			ModsManager.loadedAssemblies.Add(asm);
-			Type[] types = asm.GetTypes();
+			loadedAssemblies.Add(asm);
+			var types = asm.GetTypes();
 			for (int i = 0; i < types.Length; i++)
 			{
-				PluginLoaderAttribute pluginLoaderAttribute = (PluginLoaderAttribute)Attribute.GetCustomAttribute(types[i], attr);
+				var pluginLoaderAttribute = (PluginLoaderAttribute)Attribute.GetCustomAttribute(types[i], attr);
 				if (pluginLoaderAttribute != null)
 				{
-					ModInfo modInfo;
-					if (!ModsManager.DisabledMods.Contains((modInfo = pluginLoaderAttribute.ModInfo).Name))
+					MethodInfo c;
+					if ((c = types[i].GetMethod("Initialize", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)) != null)
 					{
-						MethodInfo c;
-						if ((c = types[i].GetMethod("Initialize", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)) != null)
-						{
-							c.Invoke(Activator.CreateInstance(types[i]), null);
-							ModsManager.loadedMods.Add(modInfo);
-						}
+						c.Invoke(Activator.CreateInstance(types[i]), null);
+					}
+					loadedMods.Add(pluginLoaderAttribute.ModInfo);
+				}
+			}
+		}
+
+		public static void SaveConfig(string name)
+		{
+			using (var writer = new StreamWriter(Path.Combine(ContentManager.Path, name), false))
+			{
+				writer.WriteLine("Disabled:");
+				for (var enumerator = DisabledMods.GetEnumerator(); enumerator.MoveNext();)
+				{
+					writer.WriteLine(enumerator.Current);
+				}
+				writer.WriteLine("Last succeed:");
+				writer.WriteLine("FullName\tLastModify");
+				for (var enumerator = loadedAssemblies.GetEnumerator(); enumerator.MoveNext();)
+				{
+					writer.WriteLine("{0}\t{1}", enumerator.Current, File.GetLastWriteTimeUtc(enumerator.Current.Location));
+				}
+				writer.WriteLine();
+			}
+		}
+
+		public static List<string> Check(string file)
+		{
+			using (var reader = new StreamReader(Path.Combine(ContentManager.Path, file), false))
+			{
+				string line;
+				var list = new List<string>();
+				do
+				{
+					if ((line = reader.ReadLine()) == null)
+					{
+						return list;
 					}
 				}
+				while (line != "FullName\tLastModify");
+				var notExist = new DateTime(1601, 1, 1).ToLocalTime();
+				while ((line = reader.ReadLine()).Length != 0)
+				{
+					var name = line.Remove(line.IndexOf('\t'));
+					var time = File.GetLastWriteTimeUtc(name);
+					if (time != notExist && time.ToString() != line.Substring(line.IndexOf('\t') + 1))
+					{
+						list.Add(name);
+					}
+				}
+				return list;
 			}
 		}
 

@@ -2,11 +2,9 @@ using Engine;
 using Engine.Content;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 using XmlUtilities;
 
@@ -24,73 +22,75 @@ namespace Game
 			Directory.CreateDirectory(ContentManager.Path = (ExternalContentManager.Providers[0] as AndroidSdCardExternalContentProvider).ToInternalPath("Mods"));
 			ModsManager.Initialize();
 			ContentCache.AddPackage("app:Content.pak");
-			using (IEnumerator<string> enumerator = (PAKsList = new ReadOnlyList<string>(ModsManager.GetFiles(".pak"))).GetEnumerator())
+			var enumerator = (PAKsList = new ReadOnlyList<string>(ModsManager.GetFiles(".pak"))).GetEnumerator();
+			while (enumerator.MoveNext())
 			{
-				while (enumerator.MoveNext())
-				{
-					ContentCache.AddPackage(enumerator.Current);
-				}
+				ContentCache.AddPackage(enumerator.Current);
 			}
 		}
-	}
-	public static class BlocksManager
-	{
-		public static ReadOnlyList<string> CSVsList;
 
-		public static void Initialize()
+		public static object Get(string name)
 		{
-			// Insert this into BlocksManager.Initialize and remove 'Index of block type \"{0}\" conflicts with another block' error
-			CSVsList = new ReadOnlyList<string>(ModsManager.GetFiles(".csv"));
-			using (IEnumerator<string> enumerator = CSVsList.GetEnumerator())
-			{
-				while (enumerator.MoveNext())
-				{
-					BlocksManager.LoadBlocksData(enumerator.Current);
-				}
-			}
+			return ContentCache.Get(name);
 		}
-		static void LoadBlocksData(string data)
+	
+		public static object Get(Type type, string name)
 		{
-			// remove the last 'throw'
+			if (type == typeof(Subtexture))
+				return TextureAtlasManager.GetSubtexture(name);
+			if (type == typeof(string) && name.StartsWith("Strings/"))
+				return StringsManager.GetString(name.Substring(8));
+			object obj = ContentManager.Get(name);
+			if (!type.GetTypeInfo().IsAssignableFrom(obj.GetType().GetTypeInfo()))
+				throw new InvalidOperationException(string.Format("Content \"{0}\" has type {1}, requested type was {2}", name, obj.GetType().FullName, type.FullName));
+			return obj;
 		}
-		public static IEnumerable<TypeInfo> GetBlockTypes()
+	
+		public static T Get<T>(string name)
 		{
-			var list = new List<TypeInfo>();
-			list.AddRange(typeof(BlocksManager).GetTypeInfo().Assembly.DefinedTypes);
-			using (IEnumerator<string> enumerator = LoadedAssemblies.GetEnumerator())
-			{
-				while (enumerator.MoveNext())
-				{
-					list.AddRange(enumerator.Current.DefinedTypes);
-				}
-			}
-			return list;
+			return (T)ContentManager.Get(typeof(T), name);
 		}
-	}
-	public static class CraftingRecipesManager
-	{
-		public static ReadOnlyList<string> CRsList;
+	
+		public static void Dispose(string name)
+		{
+			ContentCache.Dispose(name);
+		}
+	
+		public static bool IsContent(object content)
+		{
+			return ContentCache.IsContent(content);
+		}
+	
+		public static ReadOnlyList<ContentInfo> List()
+		{
+			return ContentCache.List();
+		}
+	
+		public static ReadOnlyList<ContentInfo> List(string directory)
+		{
+			return ContentCache.List(directory);
+		}
 
-		public static void Initialize()
+		public static IEnumerable<XElement> ConbineXElements(IEnumerable<XElement> elements, IEnumerable<string> files, string type)
 		{
-			// Insert this before the CraftingRecipesManager.Initialize
-			IEnumerable<XElement> elements = ContentManager.Get<XElement>("CraftingRecipes").Descendants("Recipe");
-			CRsList = new ReadOnlyList<string>(ModsManager.GetFiles(".cr"));
-			using (IEnumerator<string> enumerator = CRsList.GetEnumerator())
+			var enumerator = files.GetEnumerator();
+			while (enumerator.MoveNext())
 			{
-				while (enumerator.MoveNext())
+				var reader = new StreamReader(enumerator.Current);
+				try
 				{
-					try
-					{
-						elements = elements.Concat(XmlUtils.LoadXmlFromStream(Storage.OpenFile(enumerator.Current, OpenFileMode.Read), null, true).Descendants("Recipe"));
-					}
-					catch (Exception ex)
-					{
-						Log.Warning(string.Format("Recipes \"{0}\" could not be loaded. Reason: {1}", enumerator.Current, ex.Message));
-					}
+					elements = elements.Concat(XmlUtils.LoadXmlFromTextReader(reader, true).Descendants(type));
+				}
+				catch (Exception ex)
+				{
+					Log.Warning(string.Format("\"{0}\": {1}", enumerator.Current.Substring(ContentManager.Path.Length), ex.Message));
+				}
+				finally
+				{
+					reader.Dispose();
 				}
 			}
-			// foreach (XElement current in elements)
+			return elements;
 		}
 	}
 }
