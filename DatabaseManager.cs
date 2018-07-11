@@ -15,13 +15,12 @@ namespace Game
 	{
 		private static GameDatabase m_gameDatabase;
 		private static Dictionary<string, ValuesDictionary> m_valueDictionaries = new Dictionary<string, ValuesDictionary>();
-		public static ReadOnlyList<string> DBList;
 		public static GameDatabase GameDatabase
 		{
 			get
 			{
-				if (DatabaseManager.m_gameDatabase != null)
-					return DatabaseManager.m_gameDatabase;
+				if (m_gameDatabase != null)
+					return m_gameDatabase;
 				throw new InvalidOperationException("Database not loaded.");
 			}
 		}
@@ -29,15 +28,15 @@ namespace Game
 		// Replace DatabaseManager.Initialize
 		public static void Initialize()
 		{
-			if (DatabaseManager.m_gameDatabase == null)
+			if (m_gameDatabase == null)
 			{
 				XElement node = ContentManager.Get<XElement>("Database");
 				ContentManager.Dispose("Database");
-				var database = (DatabaseManager.m_gameDatabase = new GameDatabase(XmlDatabaseSerializer.LoadDatabase(node))).Database;
-				var enumerator = (DBList = new ReadOnlyList<string>(ModsManager.GetFiles(".xdb"))).GetEnumerator();
+				var database = (m_gameDatabase = new GameDatabase(XmlDatabaseSerializer.LoadDatabase(node))).Database;
+				var enumerator = (new ReadOnlyList<FileEntry>(ModsManager.GetEntries(".xdb"))).GetEnumerator();
 				while (enumerator.MoveNext())
 				{
-					var reader = new StreamReader(enumerator.Current);
+					var reader = new StreamReader(enumerator.Current.Stream);
 					try
 					{
 						foreach (var item in XmlDatabaseSerializer.LoadDatabaseObjectsList(XmlUtils.LoadXmlFromTextReader(reader, true), database))
@@ -45,20 +44,20 @@ namespace Game
 							item.NestingParent = database.Root;
 						}
 					}
-					catch (Exception ex)
+					catch (Exception e)
 					{
-						Log.Warning(string.Format("\"{0}\": {1}", enumerator.Current.Substring(ContentManager.Path.Length), ex.Message));
+						Log.Warning(string.Format("\"{0}\": {1}", enumerator.Current.Filename, e));
 					}
 					finally
 					{
 						reader.Dispose();
 					}
 				}
-				foreach (DatabaseObject explicitNestingChild in DatabaseManager.GameDatabase.Database.Root.GetExplicitNestingChildren(DatabaseManager.GameDatabase.EntityTemplateType, false))
+				foreach (DatabaseObject explicitNestingChild in GameDatabase.Database.Root.GetExplicitNestingChildren(GameDatabase.EntityTemplateType, false))
 				{
 					var valuesDictionary = new ValuesDictionary();
 					valuesDictionary.PopulateFromDatabaseObject(explicitNestingChild);
-					DatabaseManager.m_valueDictionaries.Add(explicitNestingChild.Name, valuesDictionary);
+					m_valueDictionaries[explicitNestingChild.Name] = valuesDictionary;
 				}
 				return;
 			}

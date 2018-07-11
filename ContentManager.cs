@@ -14,18 +14,16 @@ namespace Game
 	{
 		public static string Path;
 
-		public static ReadOnlyList<string> PAKsList;
-
 		public static void Initialize()
 		{
-			// Note: make AndroidSdCardExternalContentProvider.ToInternalPath public
-			Directory.CreateDirectory(ContentManager.Path = (ExternalContentManager.Providers[0] as AndroidSdCardExternalContentProvider).ToInternalPath("Mods"));
+			Directory.CreateDirectory(ContentManager.Path = System.IO.Path.Combine(Android.OS.Environment.ExternalStorageDirectory.AbsolutePath, "Survivalcraft", "Mods"));
+			//Directory.CreateDirectory(ContentManager.Path = Storage.GetSystemPath("data:Mods"));
 			ModsManager.Initialize();
-			ContentCache.AddPackage("app:Content.pak");
-			var enumerator = (PAKsList = new ReadOnlyList<string>(ModsManager.GetFiles(".pak"))).GetEnumerator();
+			ContentCache.AddPackage(Storage.OpenFile("app:Content.pak", OpenFileMode.Read));
+			var enumerator = (new ReadOnlyList<FileEntry>(ModsManager.GetEntries(".pak"))).GetEnumerator();
 			while (enumerator.MoveNext())
 			{
-				ContentCache.AddPackage(enumerator.Current);
+				ContentCache.AddPackage(enumerator.Current.Stream);
 			}
 		}
 
@@ -40,7 +38,7 @@ namespace Game
 				return TextureAtlasManager.GetSubtexture(name);
 			if (type == typeof(string) && name.StartsWith("Strings/"))
 				return StringsManager.GetString(name.Substring(8));
-			object obj = ContentManager.Get(name);
+			object obj = Get(name);
 			if (!type.GetTypeInfo().IsAssignableFrom(obj.GetType().GetTypeInfo()))
 				throw new InvalidOperationException(string.Format("Content \"{0}\" has type {1}, requested type was {2}", name, obj.GetType().FullName, type.FullName));
 			return obj;
@@ -48,7 +46,7 @@ namespace Game
 	
 		public static T Get<T>(string name)
 		{
-			return (T)ContentManager.Get(typeof(T), name);
+			return (T)Get(typeof(T), name);
 		}
 	
 		public static void Dispose(string name)
@@ -71,19 +69,19 @@ namespace Game
 			return ContentCache.List(directory);
 		}
 
-		public static IEnumerable<XElement> ConbineXElements(IEnumerable<XElement> elements, IEnumerable<string> files, string type)
+		public static IEnumerable<XElement> ConbineXElements(IEnumerable<XElement> elements, IEnumerable<FileEntry> files, string type)
 		{
 			var enumerator = files.GetEnumerator();
 			while (enumerator.MoveNext())
 			{
-				var reader = new StreamReader(enumerator.Current);
+				var reader = new StreamReader(enumerator.Current.Stream);
 				try
 				{
 					elements = elements.Concat(XmlUtils.LoadXmlFromTextReader(reader, true).Descendants(type));
 				}
-				catch (Exception ex)
+				catch (Exception e)
 				{
-					Log.Warning(string.Format("\"{0}\": {1}", enumerator.Current.Substring(ContentManager.Path.Length), ex.Message));
+					Log.Warning(string.Format("\"{0}\": {1}", enumerator.Current.Filename, e));
 				}
 				finally
 				{

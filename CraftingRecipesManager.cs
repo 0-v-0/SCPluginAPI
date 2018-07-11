@@ -12,7 +12,6 @@ namespace Game
 	public static class CraftingRecipesManager
 	{
 		private static List<CraftingRecipe> m_recipes;
-		public static ReadOnlyList<string> CRsList;
 		public static ReadOnlyList<CraftingRecipe> Recipes
 		{
 			get
@@ -23,7 +22,7 @@ namespace Game
 		public static void Initialize()
 		{
 			m_recipes = new List<CraftingRecipe>();
-			foreach (var descendant in ContentManager.ConbineXElements(ContentManager.Get<XElement>("CraftingRecipes").Descendants("Recipe"), CRsList = new ReadOnlyList<string>(ModsManager.GetFiles(".cr")), "Recipe"))
+			foreach (var descendant in ContentManager.ConbineXElements(ContentManager.Get<XElement>("CraftingRecipes").Descendants("Recipe"), new ReadOnlyList<FileEntry>(ModsManager.GetEntries(".cr")), "Recipe"))
 			{
 				var craftingRecipe = new CraftingRecipe();
 				var attributeValue1 = XmlUtils.GetAttributeValue<string>(descendant, "Result");

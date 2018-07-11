@@ -14,7 +14,6 @@ namespace Game
 		private readonly ButtonWidget m_recipaediaButton;
 		private readonly Dictionary<string, HelpTopic> m_topics = new Dictionary<string, HelpTopic>();
 		private readonly ListPanelWidget m_topicsList;
-		public static ReadOnlyList<string> FileList;
 
 		public HelpScreen()
 		{
@@ -37,7 +36,7 @@ namespace Game
 				if (helpTopic2 != null)
 					this.ShowTopic(helpTopic2);
 			};
-			foreach (var element in ContentManager.ConbineXElements(ContentManager.Get<XElement>("Help").Elements(), FileList = new ReadOnlyList<string>(ModsManager.GetFiles(".hlp")), "Topic"))
+			foreach (var element in ContentManager.ConbineXElements(ContentManager.Get<XElement>("Help").Elements(), new ReadOnlyList<FileEntry>(ModsManager.GetEntries(".hlp")), "Topic"))
 			{
 				var strArray = XmlUtils.GetAttributeValue(element, "DisabledPlatforms", string.Empty).Split(',');
 				var func = (Func<string, bool>) (s =>

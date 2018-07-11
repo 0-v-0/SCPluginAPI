@@ -12,13 +12,12 @@ namespace Game
 		private static ClothingData[] m_clothingData;
 		private BlockMesh m_innerMesh;
 		private BlockMesh m_outerMesh;
-		public static ReadOnlyList<string> ClothesList;
 		// Replace ClothingBlock.Initialize
 		public override void Initialize()
 		{
 			var num = 0;
 			var dictionary = new Dictionary<int, ClothingData>();
-			foreach (var element in ContentManager.ConbineXElements(ContentManager.Get<XElement>("Clothes").Elements(), ClothesList = new ReadOnlyList<string>(ModsManager.GetFiles(".clo")), "ClothingData"))
+			foreach (var element in ContentManager.ConbineXElements(ContentManager.Get<XElement>("Clothes").Elements(), new ReadOnlyList<FileEntry>(ModsManager.GetEntries(".clo")), "ClothingData"))
 			{
 				var clothingData = new ClothingData
 				{

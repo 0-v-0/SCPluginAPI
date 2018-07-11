@@ -17,7 +17,6 @@ namespace Game
 		private static readonly List<string> m_categories = new List<string>();
 		private static readonly DrawBlockEnvironmentData m_defaultEnvironmentData = new DrawBlockEnvironmentData();
 		private static readonly Vector4[] m_slotTexCoords = new Vector4[256];
-		public static ReadOnlyList<string> CSVsList;
 
 		public static Block[] Blocks
 		{
@@ -86,17 +85,17 @@ namespace Game
 			var data = ContentManager.Get<string>("BlocksData");
 			ContentManager.Dispose("BlocksData");
 			LoadBlocksData(data);
-			var enumerator = (CSVsList = new ReadOnlyList<string>(ModsManager.GetFiles(".csv"))).GetEnumerator();
+			var enumerator = (new ReadOnlyList<FileEntry>(ModsManager.GetEntries(".csv"))).GetEnumerator();
 			while (enumerator.MoveNext())
 			{
-				var reader = new StreamReader(enumerator.Current);
+				var reader = new StreamReader(enumerator.Current.Stream);
 				try
 				{
 					LoadBlocksData(reader.ReadToEnd());
 				}
-				catch (Exception ex)
+				catch (Exception e)
 				{
-					Log.Warning(string.Format("\"{0}\": {1}", enumerator.Current.Substring(ContentManager.Path.Length), ex.Message));
+					Log.Warning(string.Format("\"{0}\": {1}", enumerator.Current.Filename, e));
 				}
 				finally
 				{
@@ -382,9 +381,8 @@ namespace Game
 			return block.GetDamageDestructionValue(value);
 		}
 
-		private static void LoadBlocksData(string data)
+		public static void LoadBlocksData(string data)
 		{
-			var dictionary1 = new Dictionary<Block, bool>();
 			data = data.Replace("\r", string.Empty);
 			var strArray1 = data.Split(new char[1] {'\n'}, StringSplitOptions.RemoveEmptyEntries);
 			var strArray2 = (string[]) null;
@@ -408,11 +406,6 @@ namespace Game
 						if (key1 == null)
 							throw new InvalidOperationException(string.Format(
 								"Block \"{0}\" not found when loading block data.", new object[1] {typeName}));
-						if (dictionary1.ContainsKey(key1))
-							throw new InvalidOperationException(string.Format(
-								"Data for block \"{0}\" specified more than once when loading block data.",
-								new object[1] {typeName}));
-						dictionary1.Add(key1, true);
 						var dictionary2 = new Dictionary<string, FieldInfo>();
 						foreach (var runtimeField in key1.GetType().GetRuntimeFields())
 							if (runtimeField.IsPublic && !runtimeField.IsStatic)
@@ -458,14 +451,6 @@ namespace Game
 					}
 				}
 			}
-
-			using (var enumerator = Blocks.Except(dictionary1.Keys).GetEnumerator())
-			{
-				if (enumerator.MoveNext())
-					throw new InvalidOperationException(string.Format(
-						"Data for block \"{0}\" not found when loading blocks data.",
-						new object[1] {enumerator.Current.GetType().Name}));
-			}
 		}
 
 		private static void CalculateSlotTexCoordTables()
@@ -474,7 +459,7 @@ namespace Game
 				m_slotTexCoords[slot] = TextureSlotToTextureCoords(slot);
 		}
 
-		private static Vector4 TextureSlotToTextureCoords(int slot)
+		public static Vector4 TextureSlotToTextureCoords(int slot)
 		{
 			var num1 = slot % 16;
 			var num2 = slot / 16;

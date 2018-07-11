@@ -1,4 +1,4 @@
-﻿#region Using directives
+#region Using directives
 using System;
 using System.Linq;
 using System.Text;
@@ -35,38 +35,30 @@ namespace SCInjector
 			FuncTypes[0] = module.ImportReference(type);
 			int i = 1;
 			for (; i < 7; i++)
-			{
 				Invokes[i] = types.FindMethod("Action`" + i.ToString(), "Invoke", out FuncTypes[i]);
-			}
 			for (; i < 15; i++)
-			{
 				Invokes[i] = types.FindMethod("Func`" + (i - 6).ToString(), "Invoke", out FuncTypes[i]);
-			}
 			Invokes[17] = types.FindMethod("Func`11", "Invoke", out FuncTypes[17]);
 			//attribute = types.FindType("CompilerGeneratedAttribute");
 		}
 		public void Apply(IEnumerable<MethodDefinition> methods)
 		{
 			int count = methods.Count();
-			if (count == 0)
-			{
-				return;
-			}
+			if (count == 0) return;
 			var d = new Dictionary<string, char>();
 			foreach (var method in methods)
 			{
 				MethodBody body;
 				if (!AppliedMethods.Add(method) || (body = method.Body) == null)
-				{
 					continue;
-				}
 				string name;
 				bool flag = method.IsRuntimeSpecialName;
 				if ((name = method.Name.TrimStart('.', '<').Replace('>','_')).Length == 5 && flag)
 					continue;
 				char n;
 				if (d.TryGetValue(name, out n)) d[name]++;
-				else{
+				else
+				{
 					d.Add(name, '2');
 					n = '1';
 				}
@@ -79,9 +71,7 @@ namespace SCInjector
 					else continue;
 				}
 				else if (count > 6)
-				{
 					continue;
-				}
 				MethodReference invoke = module.ImportReference(Invokes[index]);
 				Lst.Append(method.FullName + "\t" + (name += char.ToString(n)) + Environment.NewLine);
 				//TypeReference type;
@@ -90,17 +80,14 @@ namespace SCInjector
 				{
 					var type = new GenericInstanceType(module.ImportReference(FuncTypes[index]));
 					for (index = 0; index < count; index++)
-					{
 						type.GenericArguments.Add(paras[index].ParameterType);
-					}
 					if (rettype.Name != "Void")
-					{
 						type.GenericArguments.Add(rettype);
-					}
 					field = new FieldDefinition(name, FieldAttributes.Public | FieldAttributes.Static, type);
 					invoke.DeclaringType = type;
 				}
-				else field = new FieldDefinition(name, FieldAttributes.Public | FieldAttributes.Static, FuncTypes[0]);
+				else
+					field = new FieldDefinition(name, FieldAttributes.Public | FieldAttributes.Static, FuncTypes[0]);
 				method.DeclaringType.Fields.Add(field);
 				ILProcessor processor;
 				/*var ins = body.Instructions;*/
@@ -110,13 +97,9 @@ namespace SCInjector
 				processor.InsertBefore(start, Instruction.Create(OpCodes.Brfalse_S, pop = Instruction.Create(OpCodes.Pop)));
 				body.MaxStackSize = Math.Max(body.MaxStackSize, count + (flag ? 2 : 1));
 				if(flag)
-				{
 					processor.InsertBefore(start, Instruction.Create(OpCodes.Dup));
-				}
 				/*if (flag = method.IsStatic && count != 0)
-				{
 					processor.InsertBefore(start, Instruction.Create(OpCodes.Ldarg_0));
-				}
 				switch (count - (flag ? 1 : 0))
 				{
 				case 0: break;
@@ -151,13 +134,10 @@ namespace SCInjector
 			foreach (var type in types)
 			{
 				Collection<CustomAttribute> attrs;
-				int i = 0;
 				foreach (var nestedType in type.NestedTypes)
 				{
-					if (nestedType.IsNestedPrivate)
-					{
-						nestedType.Name = "m" + i++.ToString("x");
-					}
+					//if (nestedType.IsNestedPrivate)
+						//nestedType.Name = "m" + i++.ToString("x");
 					attrs = nestedType.CustomAttributes;
 					if (attrs.Count == 1)
 					{
@@ -165,42 +145,28 @@ namespace SCInjector
 					}
 					Optimize(nestedType.Fields);
 					using (var enumerator = nestedType.Methods.GetEnumerator())
-					{
-						for (int j = 0; enumerator.MoveNext();)
-						{
-							if (!enumerator.Current.IsPublic)
-							{
-								enumerator.Current.Name = "m" + j++.ToString("x");
-							}
-						}
-					}
-				}
-				if (type.IsNotPublic)
-				{
-					type.IsPublic = true;
+						while (enumerator.MoveNext())
+							enumerator.Current.IsPublic = true;
+					//		if (!enumerator.Current.IsPublic)
+					//			enumerator.Current.Name = "m" + i++.ToString("x");
 				}
 				Optimize(type.Fields);
-				i = 0;
 				foreach (var method in type.Methods)
 				{
-					if (method.IsRuntimeSpecialName)
-					{
-						continue;
-					}
+					if (method.IsRuntimeSpecialName) continue;
 					if (method.IsPrivate)
 					{
-						method.Name = "m" + i++.ToString("x");
+						// if (char.IsUpper(method.Name, 0))
+							method.IsPublic = true;
+						//	method.Name = "m" + i++.ToString("x");
 					}
 					attrs = method.CustomAttributes;
-					if (attrs.Count == 1)
-					{
-						attrs.Clear();
-					}
-					/*MethodBody body = method.Body;
-					if (body == null) continue;
-					var v = body.Variables;
-					int lc = v.Count;
-					if (lc != 0)
+					if (attrs.Count == 1) attrs.Clear();
+					/*MethodBody body;
+					if ((body = method.Body) == null) continue;
+					Collection<VariableDefinition> v;
+					int lc;
+					if ((lc = (v = body.Variables).Count) != 0)
 					{
 						Optimize(body, OpCodes.Ldloc_0, OpCodes.Stloc_0);
 						if (lc > 1)
@@ -209,43 +175,30 @@ namespace SCInjector
 							if (lc > 2)
 							{
 								Optimize(body, OpCodes.Ldloc_2, OpCodes.Stloc_2);
-								if (lc > 2)
+								if (lc > 3)
 								{
 									Optimize(body, OpCodes.Ldloc_3, OpCodes.Stloc_3);
+									while (lc-- != 0)
+									{
+										Optimize(body, OpCodes.Ldloc_S, OpCodes.Stloc_S, v[lc]);
+									}
 								}
 							}
 						}
-						while (lc-- != 0)
-						{
-							Optimize(body, OpCodes.Ldloc_S, OpCodes.Stloc_S, v[lc]);
-						}
-					*/
+					}*/
 				}
 			}
 		}
 		public static void Optimize(IEnumerable<FieldDefinition> fields)
 		{
-			int i = 0;
 			foreach (var field in fields)
 			{
-				/*string name = field.Name;
-				if (name[0] == '<')
-				{
-					char c = name[1];
-					field.Name = char.ToLower(c).ToString() + name.Substring(2, name.LastIndexOf('>') - 2);*/
-				if (field.Name.IndexOf(">k_") != -1)
-				{
-					continue;
-				}
-				if (field.IsPrivate || field.IsAssembly)
-				{
-					field.Name = "m" + i++.ToString("x");
-					var attrs = field.CustomAttributes;
-					if (attrs.Count == 1)
-					{
-						attrs.Clear();
-					}
-				}
+				var name = field.Name;
+				//if (name[0] == 'm' && name[1] == '_')
+				//	field.Name = name.Substring(2);
+				if (name.IndexOf(">k_") == -1 && (field.IsPrivate || field.IsAssembly) && field.CustomAttributes.Count == 1)
+					field.CustomAttributes.Clear();
+				field.IsPublic = true;
 			}
 		}
 		/*void Insert(this Collection<Instruction> ins, OpCode opcode)
@@ -255,23 +208,20 @@ namespace SCInjector
 		static void Optimize(MethodBody body, OpCode ldloc, OpCode stloc, VariableDefinition variable = null)
 		{
 			var ins = body.Instructions.ToArray();
-			int i = 0;
-			while ((ins[i].OpCode != stloc || ins[i++].Operand as VariableDefinition != variable) && i < ins.Length);
-			int dc;
-			for (dc = i; ins[dc].OpCode == ldloc && ins[dc].Operand as VariableDefinition == variable && i < ins.Length;)
-			{
-				dc++;
+			int i = 0, len = ins.Length;
+			while ((ins[i].OpCode != stloc || ins[i++].Operand as VariableDefinition != variable) && i < len) {
 			}
-			for (int j = dc + 1; j < ins.Length; j++)
+			int dc = i;
+			while (ins[dc].OpCode == ldloc && ins[dc].Operand as VariableDefinition == variable && i < len)
+				dc++;
+			for (int j = dc + 1; j < len; j++)
 			{
 				if (ins[j].OpCode == ldloc || ins[j].OpCode == stloc || ins[j].Operand as VariableDefinition == variable) return;
 			}
 			body.Instructions.RemoveAt(i - 1);
 			body.Instructions.RemoveAt(i);
-			for (; i < dc; i++)
-			{
-				body.Instructions[i] = Instruction.Create(OpCodes.Dup);
-			}
+			while (i < dc)
+				body.Instructions[i++] = Instruction.Create(OpCodes.Dup);
 			body.Variables.Remove(variable);
 		}*/
 	}
@@ -284,12 +234,15 @@ namespace SCInjector
 				while (enumerator.MoveNext())
 				{
 					if(enumerator.Current.Name == typeName)
-					{
 						return enumerator.Current;
-					}
 				}
 			}
 			return null;
+		}
+		internal static MethodDefinition FindMethod(this IEnumerable<TypeDefinition> types, string typeName, string methodName)
+		{
+			TypeReference type;
+			return types.FindMethod(typeName, methodName, out type);
 		}
 		internal static MethodDefinition FindMethod(this IEnumerable<TypeDefinition> types, string typeName, string methodName, out TypeReference type)
 		{
@@ -300,40 +253,32 @@ namespace SCInjector
 				while (enumerator.MoveNext())
 				{
 					if(enumerator.Current.Name == methodName)
-					{
 						return enumerator.Current;
-					}
 				}
 			}
 			return null;
 		}
 		static bool isTarget(MethodDefinition method)
 		{
-			string s = method.Name;
-			return method.IsFamily || method.IsPublic && !s.StartsWith("add_") && !s.StartsWith("remove_");
+			var s = method.Name;
+			return method.IsFamily || method.IsPublic && s != "Update" && !s.StartsWith("Draw") && !s.StartsWith("add_") && !s.StartsWith("remove_");
 		}
 		static bool isGet(IMethodSignature t)
 		{
 			return t.Parameters.Count == 2;
 		}
-		static bool isTarget(TypeReference t)
+		static bool isT(MemberReference m)
+		{
+			return m.Name != "DecodeIngredient";
+		}
+		static bool isTarget(TypeDefinition t)
 		{
 			if (t.Namespace.Length != 4) //if (t.Namespace != "Game")
 			{
 				return false;
 			}
-			const string subsystem = "Subsystem";
-			string s = t.Name;
-			return s != subsystem + "Names" &&
-				s != subsystem + "EditableItemBehavior`1" &&
-				(s.StartsWith(subsystem) ||
-				s.StartsWith("Component") ||
-				s.StartsWith("Settings") ||
-				s.StartsWith("World") ||
-				s.EndsWith("ElectricElement") ||
-				(s.EndsWith("Camera") && s.Length != 6) ||
-				s.EndsWith("Screen") ||
-				s.EndsWith("Dialog"));
+			var s = t.Name;
+			return s.StartsWith("World") || (s.EndsWith("Camera") && !t.IsAbstract);//|| s.EndsWith("ElectricElement");
 		}
 		static void Main(string[] args)
 		{
@@ -343,7 +288,7 @@ namespace SCInjector
 				Console.WriteLine("Usage: SCInjector " + dllname);
 				return;
 			}
-			Stream stream = File.OpenRead(args[0]);
+			var stream = File.OpenRead(args[0]);
 			var asmDef = AssemblyDefinition.ReadAssembly(stream);
 			stream.Close();
 			Collection<TypeDefinition> types;
@@ -360,42 +305,50 @@ namespace SCInjector
 										types.Concat(AssemblyDefinition.ReadAssembly(stream).MainModule.Types));
 				}
 				types = asmDef.MainModule.Types;
-				foreach (var i in types.Where(isTarget))
+				TypeDefinition type;
+				using (var enumerator = types.GetEnumerator())
 				{
-					p.Apply(i.Methods.Where(isTarget));
+					while (enumerator.MoveNext())
+					{
+						(type = enumerator.Current).IsPublic = true;
+						if (isTarget(type))
+							p.Apply(type.Methods);
+					}
 				}
-				var typenames = ("Block,BlocksManager,CharacterSkinsManager,CraftingRecipesManager,DatabaseManager,"+
-					"DialogsManager,ExternalContentManager,LightingManager,GameManager,MotdManager,MusicManager,PlantsManager,"+
-					"PlayerData,SimplexNoise,StringsManager,TerrainUpdater,TerrainContentsGenerator,InventorySlotWidget"
+				var typenames = ("BlocksManager,CharacterSkinsManager,DatabaseManager,DialogsManager,"+
+					"ExternalContentManager,LightingManager,GameManager,MotdManager,MusicManager,PlantsManager,"+
+					"PlayerData,SettingsManager,StringsManager"
 					).Split(new []{','});
 				for (int i = 0; i < typenames.Length; i++)
 				{
 					/*int index;
 					if ((index = typenames[i].IndexOf('.') + 1) != 0)
 					{
-						p.Apply(new MethodDefinition[]
+						p.Apply(new []
 						{
-							types.FindMethod(typenames[i].Substring(0, index), typenames[i].Substring(index), out type)
+							types.FindMethod(typenames[i].Substring(0, index), typenames[i].Substring(index))
 						});
-						continue;
-					}*/
-					p.Apply(types.FindType(typenames[i]).Methods);
+					}
+					else*/
+					p.Apply(types.FindType(typenames[i]).Methods.Where(isTarget));
 				}
-				TypeReference type;
 				p.Apply(new []
 				{
+					types.FindMethod("AudioManager", "PlaySound"),
+					types.FindMethod("BlocksTexturesManager", "ValidateBlocksTexture"),
 					types.FindType("ContentManager").Methods.First(isGet),
-					types.FindMethod("AudioManager", "PlaySound", out type),
-					types.FindMethod("BlocksTexturesManager", "ValidateBlocksTexture", out type),
-					types.FindMethod("FurnitureDesign", "CreateGeometry", out type),
-					types.FindMethod("FurnitureDesign", "Resize", out type),
-					types.FindMethod("FurnitureDesign", "SetValues", out type),
-					types.FindMethod("PerformanceManager", "Draw", out type)
+					types.FindMethod("FurnitureDesign", "CreateGeometry"),
+					types.FindMethod("FurnitureDesign", "Resize"),
+					types.FindMethod("FurnitureDesign", "SetValues"),
+					types.FindMethod("InventorySlotWidget", ".ctor"),
+					types.FindMethod("PerformanceManager", "Draw"),
+					types.FindMethod("ScreensManager", "Initialize"),
+					types.FindMethod("TerrainUpdater","GenerateChunkVertices")
 				});
+				p.Apply(types.FindType("CraftingRecipesManager").Methods.Where(isT));
 				File.WriteAllText("methods.txt", p.Lst.ToString());
 			}
-			else types = asmDef.MainModule.Types;
-			//PluginPatch.Optimize(types);
+			PluginPatch.Optimize(asmDef.MainModule.Types);
 			using (stream = File.OpenWrite("output_" + Path.GetFileName(args[0])))
 			{
 				asmDef.Write(stream);
