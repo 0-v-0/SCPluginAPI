@@ -13,8 +13,8 @@ namespace Game
 {
 	public static class DatabaseManager
 	{
-		private static GameDatabase m_gameDatabase;
-		private static Dictionary<string, ValuesDictionary> m_valueDictionaries = new Dictionary<string, ValuesDictionary>();
+		static GameDatabase m_gameDatabase;
+		static Dictionary<string, ValuesDictionary> m_valueDictionaries = new Dictionary<string, ValuesDictionary>();
 		public static GameDatabase GameDatabase
 		{
 			get
@@ -32,27 +32,8 @@ namespace Game
 			{
 				XElement node = ContentManager.Get<XElement>("Database");
 				ContentManager.Dispose("Database");
-				var database = (m_gameDatabase = new GameDatabase(XmlDatabaseSerializer.LoadDatabase(node))).Database;
-				var enumerator = (new ReadOnlyList<FileEntry>(ModsManager.GetEntries(".xdb"))).GetEnumerator();
-				while (enumerator.MoveNext())
-				{
-					var reader = new StreamReader(enumerator.Current.Stream);
-					try
-					{
-						foreach (var item in XmlDatabaseSerializer.LoadDatabaseObjectsList(XmlUtils.LoadXmlFromTextReader(reader, true), database))
-						{
-							item.NestingParent = database.Root;
-						}
-					}
-					catch (Exception e)
-					{
-						Log.Warning(string.Format("\"{0}\": {1}", enumerator.Current.Filename, e));
-					}
-					finally
-					{
-						reader.Dispose();
-					}
-				}
+				ContentManager.ConbineXElements(node, ModsManager.GetEntries(".xdb"), "Guid", "Name");
+				m_gameDatabase = new GameDatabase(XmlDatabaseSerializer.LoadDatabase(node));
 				foreach (DatabaseObject explicitNestingChild in GameDatabase.Database.Root.GetExplicitNestingChildren(GameDatabase.EntityTemplateType, false))
 				{
 					var valuesDictionary = new ValuesDictionary();

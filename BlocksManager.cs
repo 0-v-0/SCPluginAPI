@@ -85,7 +85,7 @@ namespace Game
 			var data = ContentManager.Get<string>("BlocksData");
 			ContentManager.Dispose("BlocksData");
 			LoadBlocksData(data);
-			var enumerator = (new ReadOnlyList<FileEntry>(ModsManager.GetEntries(".csv"))).GetEnumerator();
+			var enumerator = ModsManager.GetEntries(".csv").GetEnumerator();
 			while (enumerator.MoveNext())
 			{
 				var reader = new StreamReader(enumerator.Current.Stream);

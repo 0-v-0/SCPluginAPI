@@ -12,8 +12,8 @@ namespace Game
 		public static void Initialize()
 		{
 			Storage.CreateDirectory(WorldsManager.WorldsDirectoryName);
-			string text = ContentManager.Get<string>("NewWorldNames");
-			var enumerator = (new ReadOnlyList<FileEntry>(ModsManager.GetEntries(".nwn"))).GetEnumerator();
+			var text = ContentManager.Get<string>("NewWorldNames");
+			var enumerator = ModsManager.GetEntries(".nwn").GetEnumerator();
 			while (enumerator.MoveNext())
 			{
 				var reader = new StreamReader(enumerator.Current.Stream);

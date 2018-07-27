@@ -9,15 +9,15 @@ namespace Game
 {
 	public class ClothingBlock : Block
 	{
-		private static ClothingData[] m_clothingData;
-		private BlockMesh m_innerMesh;
-		private BlockMesh m_outerMesh;
+		static ClothingData[] m_clothingData;
+		BlockMesh m_innerMesh;
+		BlockMesh m_outerMesh;
 		// Replace ClothingBlock.Initialize
 		public override void Initialize()
 		{
 			var num = 0;
 			var dictionary = new Dictionary<int, ClothingData>();
-			foreach (var element in ContentManager.ConbineXElements(ContentManager.Get<XElement>("Clothes").Elements(), new ReadOnlyList<FileEntry>(ModsManager.GetEntries(".clo")), "ClothingData"))
+			foreach (var element in ContentManager.ConbineXElements(ContentManager.Get<XElement>("Clothes"), ModsManager.GetEntries(".clo"), "Index", "DisplayName", "ClothingData").Elements())
 			{
 				var clothingData = new ClothingData
 				{
@@ -39,7 +39,7 @@ namespace Game
 					ImpactSoundsFolder = XmlUtils.GetAttributeValue<string>(element, "ImpactSoundsFolder"),
 					Description = XmlUtils.GetAttributeValue<string>(element, "Description")
 				};
-				dictionary.Add(clothingData.Index, clothingData);
+				dictionary[clothingData.Index] = clothingData;
 			}
 
 			m_clothingData = new ClothingData[dictionary.Count];

@@ -7,12 +7,12 @@ namespace Game
 {
 	public class LoadingScreen : Screen
 	{
-		private List<Action> m_loadActions = new List<Action>();
-		private int m_index;
-		private bool m_loadingStarted;
-		private bool m_loadingFinished;
-		private bool m_pauseLoading;
-		private bool m_loadingErrorsSuppressed;
+		List<Action> m_loadActions = new List<Action>();
+		int m_index;
+		bool m_loadingStarted;
+		bool m_loadingFinished;
+		bool m_pauseLoading;
+		bool m_loadingErrorsSuppressed;
 		// Replace LoadingScreen.Update
 		public override void Update()
 		{

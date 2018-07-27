@@ -142,9 +142,8 @@ namespace Game
 			{
 				Files = Directory.EnumerateFiles(ContentManager.Path);
 				var str = Path.Combine(ContentManager.Path, "mods.cfg");
-				StreamReader reader;
 				if (File.Exists(str))
-					using (reader = new StreamReader(str))
+					using (var reader = new StreamReader(str))
 					{
 						if ((str = reader.ReadLine()) != "Version 1.0" || (str = reader.ReadLine()) == null)
 							throw new NotSupportedException();
@@ -173,12 +172,6 @@ namespace Game
 					{
 						Log.Warning(string.Format("Loading mod \"{0}\" failed: {1}", str, e));
 					}
-				}
-				enumerator = GetEntries(".info").GetEnumerator();
-				while (enumerator.MoveNext())
-				{
-					using (reader = new StreamReader(enumerator.Current.Stream))
-						loadedMods.Add(SimpleJson.SimpleJson.DeserializeObject<ModInfo>(reader.ReadToEnd()));
 				}
 			}
 			catch (Exception e)

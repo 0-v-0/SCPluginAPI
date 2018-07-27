@@ -20,7 +20,7 @@ namespace Game
 			//Directory.CreateDirectory(ContentManager.Path = Storage.GetSystemPath("data:Mods"));
 			ModsManager.Initialize();
 			ContentCache.AddPackage(Storage.OpenFile("app:Content.pak", OpenFileMode.Read));
-			var enumerator = (new ReadOnlyList<FileEntry>(ModsManager.GetEntries(".pak"))).GetEnumerator();
+			var enumerator = ModsManager.GetEntries(".pak").GetEnumerator();
 			while (enumerator.MoveNext())
 			{
 				ContentCache.AddPackage(enumerator.Current.Stream);
@@ -69,7 +69,7 @@ namespace Game
 			return ContentCache.List(directory);
 		}
 
-		public static IEnumerable<XElement> ConbineXElements(IEnumerable<XElement> elements, IEnumerable<FileEntry> files, string type)
+		public static XElement ConbineXElements(XElement node, IEnumerable<FileEntry> files, string attr1 = null, string attr2 = null, string type = null)
 		{
 			var enumerator = files.GetEnumerator();
 			while (enumerator.MoveNext())
@@ -77,7 +77,9 @@ namespace Game
 				var reader = new StreamReader(enumerator.Current.Stream);
 				try
 				{
-					elements = elements.Concat(XmlUtils.LoadXmlFromTextReader(reader, true).Descendants(type));
+					var xml = XmlUtils.LoadXmlFromTextReader(reader, true);
+					Modify(node, xml, attr1, attr2, type, false);
+					Modify(node, xml, attr1, attr2, type);
 				}
 				catch (Exception e)
 				{
@@ -88,7 +90,34 @@ namespace Game
 					reader.Dispose();
 				}
 			}
-			return elements;
+			return node;
+		}
+
+		public static void Modify(XElement dst, XElement src, string attr1 = null, string attr2 = null, string type = null, bool toAdd = true)
+		{
+			var enumerator = src.DescendantsAndSelf(toAdd ? "ToAdd" : "ToRemove").GetEnumerator();
+			while (enumerator.MoveNext())
+			{
+				var node = enumerator.Current;
+				var attr = node.Attribute(attr1);
+				var guid = attr == null ? null : attr.Value;
+				attr = node.Attribute(attr2);
+				var name = attr == null ? null : attr.Value;
+				var enumerator2 = dst.DescendantsAndSelf(XmlUtils.GetAttributeValue<string>(node, "Type", type)).GetEnumerator();
+				while (enumerator2.MoveNext())
+				{
+					var current = enumerator2.Current;
+					if (guid != null)
+					{
+						if (current.Attribute(attr1).Value != guid) continue;
+					}
+					else if (name != null && current.Attribute(attr2).Value != name) continue;
+					if (toAdd)
+						current.Add(node.Elements());
+					else
+						current.Remove();
+				}
+			}
 		}
 	}
 }

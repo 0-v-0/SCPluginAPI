@@ -9,11 +9,11 @@ namespace Game
 {
 	public class HelpScreen : Screen
 	{
-		private readonly ButtonWidget m_bestiaryButton;
-		private Screen m_previousScreen;
-		private readonly ButtonWidget m_recipaediaButton;
-		private readonly Dictionary<string, HelpTopic> m_topics = new Dictionary<string, HelpTopic>();
-		private readonly ListPanelWidget m_topicsList;
+		readonly ButtonWidget m_bestiaryButton;
+		Screen m_previousScreen;
+		readonly ButtonWidget m_recipaediaButton;
+		readonly Dictionary<string, HelpTopic> m_topics = new Dictionary<string, HelpTopic>();
+		readonly ListPanelWidget m_topicsList;
 
 		public HelpScreen()
 		{
@@ -36,20 +36,17 @@ namespace Game
 				if (helpTopic2 != null)
 					this.ShowTopic(helpTopic2);
 			};
-			foreach (var element in ContentManager.ConbineXElements(ContentManager.Get<XElement>("Help").Elements(), new ReadOnlyList<FileEntry>(ModsManager.GetEntries(".hlp")), "Topic"))
+			foreach (var element in ContentManager.ConbineXElements(ContentManager.Get<XElement>("Help"), ModsManager.GetEntries(".hlp"), "Title", "Name", "Topic").Elements())
 			{
 				var strArray = XmlUtils.GetAttributeValue(element, "DisabledPlatforms", string.Empty).Split(',');
-				var func = (Func<string, bool>) (s =>
-					s.Trim().ToLower() == VersionsManager.Platform.ToString().ToLower());
-				var predicate = func;
+				var predicate = (Func<string, bool>)(s => s.Trim().ToLower() == VersionsManager.Platform.ToString().ToLower());
 				if (strArray.FirstOrDefault(predicate) == null)
 				{
 					var attributeValue1 = XmlUtils.GetAttributeValue(element, "Name", string.Empty);
 					var attributeValue2 = XmlUtils.GetAttributeValue<string>(element, "Title");
 					var str1 = string.Empty;
 					var str2 = element.Value;
-					var chArray = new char[1] {'\n'};
-					foreach (var str3 in str2.Split(chArray))
+					foreach (var str3 in str2.Split('\n'))
 						str1 = str1 + str3.Trim() + " ";
 					var str4 = str1.Replace("\r", "").Replace("’", "'").Replace("\\n", "\n");
 					var helpTopic = new HelpTopic {Name = attributeValue1, Title = attributeValue2, Text = str4};

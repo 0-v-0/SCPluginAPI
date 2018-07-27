@@ -11,7 +11,7 @@ namespace Game
 {
 	public static class CraftingRecipesManager
 	{
-		private static List<CraftingRecipe> m_recipes;
+		static List<CraftingRecipe> m_recipes;
 		public static ReadOnlyList<CraftingRecipe> Recipes
 		{
 			get
@@ -22,7 +22,7 @@ namespace Game
 		public static void Initialize()
 		{
 			m_recipes = new List<CraftingRecipe>();
-			foreach (var descendant in ContentManager.ConbineXElements(ContentManager.Get<XElement>("CraftingRecipes").Descendants("Recipe"), new ReadOnlyList<FileEntry>(ModsManager.GetEntries(".cr")), "Recipe"))
+			foreach (var descendant in ContentManager.ConbineXElements(ContentManager.Get<XElement>("CraftingRecipes"), ModsManager.GetEntries(".cr"), "Description", "Result", "Recipe").Descendants("Recipe"))
 			{
 				var craftingRecipe = new CraftingRecipe();
 				var attributeValue1 = XmlUtils.GetAttributeValue<string>(descendant, "Result");
@@ -126,7 +126,7 @@ namespace Game
 			data = strArray.Length >= 2 ? int.Parse(strArray[1], CultureInfo.InvariantCulture) : new int?();
 		}
 
-		private static bool MatchRecipe(string[] requiredIngredients, string[] actualIngredients)
+		static bool MatchRecipe(string[] requiredIngredients, string[] actualIngredients)
 		{
 			var transformedIngredients = new string[9];
 			for (var index1 = 0; index1 < 2; ++index1)
@@ -152,7 +152,7 @@ namespace Game
 			return false;
 		}
 
-		private static bool TransformRecipe(string[] transformedIngredients, string[] ingredients, int shiftX,
+		static bool TransformRecipe(string[] transformedIngredients, string[] ingredients, int shiftX,
 			int shiftY, bool flip)
 		{
 			for (var index = 0; index < 9; ++index)
@@ -172,7 +172,7 @@ namespace Game
 			return true;
 		}
 
-		private static bool CompareIngredients(string requiredIngredient, string actualIngredient)
+		static bool CompareIngredients(string requiredIngredient, string actualIngredient)
 		{
 			if (requiredIngredient == null)
 				return actualIngredient == null;
