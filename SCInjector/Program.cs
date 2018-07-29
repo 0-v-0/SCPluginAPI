@@ -29,7 +29,7 @@ namespace SCInjector
 		//public static string TrimChars;
 		public static string Rename(MemberReference member, bool rename = true)
 		{
-			string name = member.Name.TrimStart(".<>9".ToCharArray()).Replace('>','_').PadLeft(1, '_');
+			string name = member.Name.TrimStart(".<>0123456789".ToCharArray()).Replace('>','_').PadLeft(1, '_');
 			if (rename)
 				member.Name = name;
 			return name;
@@ -58,14 +58,14 @@ namespace SCInjector
 			var d = new Dictionary<string, char>();
 			for (var i = methods.GetEnumerator(); i.MoveNext();)
 			{
-				var method = i.Current;
 				int count;
+				Instruction start;
+				var method = i.Current;
 				MethodBody body;
 				if (!AppliedMethods.Add(method) || (body = method.Body) == null)
 					continue;
 				string name;
-				bool flag = method.IsRuntimeSpecialName;
-				if ((name = Rename(method, false)).Length == 5 && flag)
+				if ((name = Rename(method, false)).Length == 5 && method.IsRuntimeSpecialName)
 					continue;
 				char n;
 				if (d.TryGetValue(name, out n))
@@ -76,11 +76,13 @@ namespace SCInjector
 					n = '1';
 				}
 				Collection<ParameterDefinition> paras;
-				int index = count = (paras = method.Parameters).Count;
+				count = (paras = method.Parameters).Count;
+				bool flag = method.IsStatic;
+				int index = flag ? count : count + 1;
 				TypeReference rettype;
 				if ((rettype = method.ReturnType).Name != "Void")
 				{
-					if (count == 10 || count < 9) index = count + 7;
+					if (count == 10 || count < 9) index += 7;
 					else continue;
 				}
 				else if (count > 6)
@@ -92,6 +94,8 @@ namespace SCInjector
 				if (index != 0)
 				{
 					var type = new GenericInstanceType(Module.ImportReference(FuncTypes[index]));
+					if (!method.IsStatic)
+						type.GenericArguments.Add(method.DeclaringType);
 					for (index = 0; index < count; index++)
 						type.GenericArguments.Add(paras[index].ParameterType);
 					if (rettype.Name != "Void")
@@ -104,41 +108,36 @@ namespace SCInjector
 				method.DeclaringType.Fields.Add(field);
 				ILProcessor processor;
 				/*var ins = body.Instructions;*/
-				Instruction start, pop;
-				(processor = body.GetILProcessor()).InsertBefore(start = flag ? body.Instructions.Last() : body.Instructions[0], Instruction.Create(OpCodes.Ldsfld, field));
+				Instruction pop;
+				(processor = body.GetILProcessor()).InsertBefore(start = method.IsRuntimeSpecialName ? body.Instructions.Last() : body.Instructions[0], Instruction.Create(OpCodes.Ldsfld, field));
 				processor.InsertBefore(start, Instruction.Create(OpCodes.Dup));
 				processor.InsertBefore(start, Instruction.Create(OpCodes.Brfalse_S, pop = Instruction.Create(OpCodes.Pop)));
-				body.MaxStackSize = Math.Max(body.MaxStackSize, count + (flag ? 2 : 1));
-				if (flag)
+				body.MaxStackSize = Math.Max(body.MaxStackSize, count + 1);
+				if (method.IsRuntimeSpecialName)
 					processor.InsertBefore(start, Instruction.Create(OpCodes.Dup));
-				/*if (flag = method.IsStatic && count != 0)
+				if (!flag || flag && count != 0)
 					processor.InsertBefore(start, Instruction.Create(OpCodes.Ldarg_0));
-				switch (count - (flag ? 1 : 0))
-				{
-				case 0: break;
-				case 1: processor.InsertBefore(start, Instruction.Create(OpCodes.Ldarg_1));
-				break;
-				case 2: processor.InsertBefore(start, Instruction.Create(OpCodes.Ldarg_1));
-						processor.InsertBefore(start, Instruction.Create(OpCodes.Ldarg_2));
-				break;
-				default:processor.InsertBefore(start, Instruction.Create(OpCodes.Ldarg_1));
-						processor.InsertBefore(start, Instruction.Create(OpCodes.Ldarg_2));
-						processor.InsertBefore(start, Instruction.Create(OpCodes.Ldarg_3));
-						for (index = flag ? 4 : 3; index < count; index++)
-						{
-							processor.InsertBefore(start, Instruction.Create(OpCodes.Ldarg_S, paras[index]));
-						}
-				break;
-				}*/
-				for (index = 0; index < count;)
-				{
-					processor.InsertBefore(start, Instruction.Create(OpCodes.Ldarg_S, paras[index++]));
-				}
+				if (count != 0)
+					switch (flag ? count - 1 : count)
+					{
+					case 0: break;
+					case 1: processor.InsertBefore(start, Instruction.Create(OpCodes.Ldarg_1));
+					break;
+					case 2: processor.InsertBefore(start, Instruction.Create(OpCodes.Ldarg_1));
+							processor.InsertBefore(start, Instruction.Create(OpCodes.Ldarg_2));
+					break;
+					default:processor.InsertBefore(start, Instruction.Create(OpCodes.Ldarg_1));
+							processor.InsertBefore(start, Instruction.Create(OpCodes.Ldarg_2));
+							processor.InsertBefore(start, Instruction.Create(OpCodes.Ldarg_3));
+							for (index = method.IsStatic ? 4 : 3; index < count; index++)
+							{
+								processor.InsertBefore(start, Instruction.Create(OpCodes.Ldarg_S, paras[index]));
+							}
+					break;
+					}
 				processor.InsertBefore(start, Instruction.Create(OpCodes.Callvirt, invoke));
-				if (!flag) //name != "ctor"
-				{
+				if (!method.IsRuntimeSpecialName)
 					processor.InsertBefore(start, Instruction.Create(OpCodes.Ret));
-				}
 				processor.InsertBefore(start, pop);
 			}
 		}

@@ -17,7 +17,7 @@ namespace Game
 		{
 			var num = 0;
 			var dictionary = new Dictionary<int, ClothingData>();
-			foreach (var element in ContentManager.ConbineXElements(ContentManager.Get<XElement>("Clothes"), ModsManager.GetEntries(".clo"), "Index", "DisplayName", "ClothingData").Elements())
+			foreach (var element in ContentManager.ConbineXElements(ContentManager.Get<XElement>("Clothes"), ModsManager.GetEntries(".clo"), "Index", "DisplayName", "Clothes").Elements())
 			{
 				var clothingData = new ClothingData
 				{

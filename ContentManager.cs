@@ -103,6 +103,7 @@ namespace Game
 				var guid = attr == null ? null : attr.Value;
 				attr = node.Attribute(attr2);
 				var name = attr == null ? null : attr.Value;
+				var toRemove = new HashSet<XElement>();
 				var enumerator2 = dst.DescendantsAndSelf(XmlUtils.GetAttributeValue<string>(node, "Type", type)).GetEnumerator();
 				while (enumerator2.MoveNext())
 				{
@@ -115,8 +116,11 @@ namespace Game
 					if (toAdd)
 						current.Add(node.Elements());
 					else
-						current.Remove();
+						toRemove.Add(current);
 				}
+				enumerator2 = toRemove.GetEnumerator();
+				while (enumerator2.MoveNext())
+					enumerator2.Current.Remove();
 			}
 		}
 	}

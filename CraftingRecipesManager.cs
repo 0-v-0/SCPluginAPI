@@ -22,7 +22,7 @@ namespace Game
 		public static void Initialize()
 		{
 			m_recipes = new List<CraftingRecipe>();
-			foreach (var descendant in ContentManager.ConbineXElements(ContentManager.Get<XElement>("CraftingRecipes"), ModsManager.GetEntries(".cr"), "Description", "Result", "Recipe").Descendants("Recipe"))
+			foreach (var descendant in ContentManager.ConbineXElements(ContentManager.Get<XElement>("CraftingRecipes"), ModsManager.GetEntries(".cr"), "Description", "Result", "Recipes").Descendants("Recipe"))
 			{
 				var craftingRecipe = new CraftingRecipe();
 				var attributeValue1 = XmlUtils.GetAttributeValue<string>(descendant, "Result");
