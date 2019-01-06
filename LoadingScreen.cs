@@ -1,5 +1,4 @@
 using Engine;
-using Game;
 using System;
 using System.Collections.Generic;
 
@@ -21,7 +20,7 @@ namespace Game
 			else if (!m_loadingFinished)
 			{
 				double realTime = Time.RealTime;
-				while (!m_pauseLoading && m_index < this.m_loadActions.Count)
+				while (!m_pauseLoading && m_index < m_loadActions.Count)
 				{
 					try
 					{

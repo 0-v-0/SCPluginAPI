@@ -1,13 +1,8 @@
-using Engine;
-using Game;
 using GameEntitySystem;
 using System;
-using System.IO;
 using System.Collections.Generic;
-using System.Linq;
 using System.Xml.Linq;
 using TemplatesDatabase;
-using XmlUtilities;
 
 namespace Game
 {
@@ -30,9 +25,9 @@ namespace Game
 		{
 			if (m_gameDatabase == null)
 			{
-				XElement node = ContentManager.Get<XElement>("Database");
+				var node = ContentManager.Get<XElement>("Database");
 				ContentManager.Dispose("Database");
-				ContentManager.ConbineXElements(node, ModsManager.GetEntries(".xdb"), "Guid", "Name");
+				ContentManager.CombineXml(node, ModsManager.GetEntries(".xdb"), "Guid", "Name");
 				m_gameDatabase = new GameDatabase(XmlDatabaseSerializer.LoadDatabase(node));
 				foreach (DatabaseObject explicitNestingChild in GameDatabase.Database.Root.GetExplicitNestingChildren(GameDatabase.EntityTemplateType, false))
 				{

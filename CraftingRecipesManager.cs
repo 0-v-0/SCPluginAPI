@@ -1,5 +1,4 @@
 using Engine;
-using Game;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -14,36 +13,34 @@ namespace Game
 		static List<CraftingRecipe> m_recipes;
 		public static ReadOnlyList<CraftingRecipe> Recipes
 		{
-			get
-			{
-				return new ReadOnlyList<CraftingRecipe>(CraftingRecipesManager.m_recipes);
-			}
+			get { return new ReadOnlyList<CraftingRecipe>(m_recipes); }
 		}
 		public static void Initialize()
 		{
 			m_recipes = new List<CraftingRecipe>();
-			foreach (var descendant in ContentManager.ConbineXElements(ContentManager.Get<XElement>("CraftingRecipes"), ModsManager.GetEntries(".cr"), "Description", "Result", "Recipes").Descendants("Recipe"))
+			for (var i = ContentManager.CombineXml(ContentManager.Get<XElement>("CraftingRecipes"), ModsManager.GetEntries(".cr"), "Description", "Result", "Recipes").Descendants("Recipe").GetEnumerator(); i.MoveNext();)
 			{
-				var craftingRecipe = new CraftingRecipe();
+				var descendant = i.Current;
+				var recipe = new CraftingRecipe();
 				var attributeValue1 = XmlUtils.GetAttributeValue<string>(descendant, "Result");
-				craftingRecipe.ResultValue = DecodeResult(attributeValue1);
-				craftingRecipe.ResultCount = XmlUtils.GetAttributeValue<int>(descendant, "ResultCount");
+				recipe.ResultValue = DecodeResult(attributeValue1);
+				recipe.ResultCount = XmlUtils.GetAttributeValue<int>(descendant, "ResultCount");
 				var attributeValue2 = XmlUtils.GetAttributeValue(descendant, "Remains", string.Empty);
 				if (!string.IsNullOrEmpty(attributeValue2))
 				{
-					craftingRecipe.RemainsValue = DecodeResult(attributeValue2);
-					craftingRecipe.RemainsCount = XmlUtils.GetAttributeValue<int>(descendant, "RemainsCount");
+					recipe.RemainsValue = DecodeResult(attributeValue2);
+					recipe.RemainsCount = XmlUtils.GetAttributeValue<int>(descendant, "RemainsCount");
 				}
 
-				craftingRecipe.RequiredHeatLevel = XmlUtils.GetAttributeValue<float>(descendant, "RequiredHeatLevel");
-				craftingRecipe.Description = XmlUtils.GetAttributeValue<string>(descendant, "Description");
-				if (craftingRecipe.ResultCount >
-					BlocksManager.Blocks[Terrain.ExtractContents(craftingRecipe.ResultValue)].MaxStacking)
+				recipe.RequiredHeatLevel = XmlUtils.GetAttributeValue<float>(descendant, "RequiredHeatLevel");
+				recipe.Description = XmlUtils.GetAttributeValue<string>(descendant, "Description");
+				if (recipe.ResultCount >
+					BlocksManager.Blocks[Terrain.ExtractContents(recipe.ResultValue)].MaxStacking)
 					throw new InvalidOperationException(string.Format(
 						"In recipe for \"{0}\" ResultCount is larger than max stacking of result block.",
 						new object[1] {attributeValue1}));
-				if (craftingRecipe.RemainsValue != 0 && craftingRecipe.RemainsCount >
-					BlocksManager.Blocks[Terrain.ExtractContents(craftingRecipe.RemainsValue)].MaxStacking)
+				if (recipe.RemainsValue != 0 && recipe.RemainsCount >
+					BlocksManager.Blocks[Terrain.ExtractContents(recipe.RemainsValue)].MaxStacking)
 					throw new InvalidOperationException(string.Format(
 						"In Recipe for \"{0}\" RemainsCount is larger than max stacking of remains block.",
 						new object[1] {attributeValue2}));
@@ -76,37 +73,37 @@ namespace Game
 					{
 						var c = str1[index2];
 						if (char.IsLower(c))
-						{
-							var str2 = dictionary[c];
-							craftingRecipe.Ingredients[index2 + index1 * 3] = str2;
-						}
+							recipe.Ingredients[index2 + index1 * 3] = dictionary[c];
 					}
 				}
 
-				m_recipes.Add(craftingRecipe);
+				m_recipes.Add(recipe);
 			}
 
-			foreach (var block in BlocksManager.Blocks)
-				m_recipes.AddRange(block.GetProceduralCraftingRecipes());
+			var blocks = BlocksManager.Blocks;
+			for (int i = 0; i < blocks.Length; i++)
+				m_recipes.AddRange(blocks[i].GetProceduralCraftingRecipes());
 			m_recipes.Sort((r1, r2) =>
 			{
-				var y = r1.Ingredients.Count(s => !string.IsNullOrEmpty(s));
-				return Comparer<int>.Default.Compare(r2.Ingredients.Count(s => !string.IsNullOrEmpty(s)), y);
+				return Comparer<int>.Default.Compare(r2.Ingredients.Count(s => !string.IsNullOrEmpty(s)), r1.Ingredients.Count(s => !string.IsNullOrEmpty(s)));
 			});
 		}
 
 		public static CraftingRecipe FindMatchingRecipe(SubsystemTerrain terrain, string[] ingredients, float heatLevel)
 		{
-			Block[] blocks = BlocksManager.Blocks;
-			for (int i = 0; i < blocks.Length; i++)
+			var blocks = BlocksManager.Blocks;
+			int i = 0;
+			CraftingRecipe recipe;
+			for (; i < blocks.Length; i++)
 			{
-				CraftingRecipe adHocCraftingRecipe = blocks[i].GetAdHocCraftingRecipe(terrain, ingredients, heatLevel);
-				if (adHocCraftingRecipe != null && heatLevel >= adHocCraftingRecipe.RequiredHeatLevel && CraftingRecipesManager.MatchRecipe(adHocCraftingRecipe.Ingredients, ingredients))
-					return adHocCraftingRecipe;
+				recipe = blocks[i].GetAdHocCraftingRecipe(terrain, ingredients, heatLevel);
+				if (recipe != null && heatLevel >= recipe.RequiredHeatLevel && MatchRecipe(recipe.Ingredients, ingredients))
+					return recipe;
 			}
-			foreach (CraftingRecipe recipe in CraftingRecipesManager.Recipes)
-			{
-				if (heatLevel >= recipe.RequiredHeatLevel && CraftingRecipesManager.MatchRecipe(recipe.Ingredients, ingredients))
+			int RecipesCount = Recipes.Count;
+			for (i = 0; i < RecipesCount; i++) {
+				recipe = Recipes[i];
+				if (heatLevel >= recipe.RequiredHeatLevel && MatchRecipe(recipe.Ingredients, ingredients))
 					return recipe;
 			}
 			return null;
@@ -129,9 +126,9 @@ namespace Game
 		static bool MatchRecipe(string[] requiredIngredients, string[] actualIngredients)
 		{
 			var transformedIngredients = new string[9];
-			for (var index1 = 0; index1 < 2; ++index1)
-			for (var shiftY = -3; shiftY <= 3; ++shiftY)
-			for (var shiftX = -3; shiftX <= 3; ++shiftX)
+			for (int index1 = 0; index1 < 2; ++index1)
+			for (int shiftY = -3; shiftY <= 3; ++shiftY)
+			for (int shiftX = -3; shiftX <= 3; ++shiftX)
 			{
 				var flip = index1 != 0;
 				if (TransformRecipe(transformedIngredients, requiredIngredients, shiftX, shiftY, flip))
@@ -155,13 +152,13 @@ namespace Game
 		static bool TransformRecipe(string[] transformedIngredients, string[] ingredients, int shiftX,
 			int shiftY, bool flip)
 		{
-			for (var index = 0; index < 9; ++index)
+			for (int index = 0; index < 9; ++index)
 				transformedIngredients[index] = null;
-			for (var index1 = 0; index1 < 3; ++index1)
-			for (var index2 = 0; index2 < 3; ++index2)
+			for (int index1 = 0; index1 < 3; ++index1)
+			for (int index2 = 0; index2 < 3; ++index2)
 			{
-				var num1 = (flip ? 3 - index2 - 1 : index2) + shiftX;
-				var num2 = index1 + shiftY;
+				int num1 = (flip ? 3 - index2 - 1 : index2) + shiftX;
+				int num2 = index1 + shiftY;
 				var ingredient = ingredients[index2 + index1 * 3];
 				if (num1 >= 0 && num2 >= 0 && num1 < 3 && num2 < 3)
 					transformedIngredients[num1 + num2 * 3] = ingredient;

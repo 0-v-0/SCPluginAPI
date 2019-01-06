@@ -1,7 +1,6 @@
 using Engine;
 using Engine.Graphics;
 using Engine.Serialization;
-using Game;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -19,34 +18,19 @@ namespace Game
 		private static readonly Vector4[] m_slotTexCoords = new Vector4[256];
 
 		public static Block[] Blocks
-		{
-			get
-			{
-				return BlocksManager.m_blocks;
-			}
-		}
+		{ get { return m_blocks; } }
 
 		public static FluidBlock[] FluidBlocks
-		{
-			get
-			{
-				return BlocksManager.m_fluidBlocks;
-			}
-		}
+		{ get { return m_fluidBlocks; } }
 
 		public static ReadOnlyList<string> Categories
-		{
-			get
-			{
-				return new ReadOnlyList<string>(m_categories);
-			}
-		}
+		{ get { return new ReadOnlyList<string>(m_categories); } }
 
 		public static void Initialize()
 		{
 			CalculateSlotTexCoordTables();
-			var x1 = 0;
-            var dictionary = new Dictionary<int, Block>();
+			int i = 0;
+			var dictionary = new Dictionary<int, Block>();
 			foreach (var definedType in GetBlockTypes())
 				if (definedType.IsSubclassOf(typeof(Block)) && !definedType.IsAbstract)
 				{
@@ -61,8 +45,8 @@ namespace Game
 						// Removed 'Index of block type \"{0}\" conflicts with another block' error
 						var instance = (Block) Activator.CreateInstance(definedType.AsType());
 						dictionary[instance.BlockIndex = num] = instance;
-						if (num > x1)
-							x1 = num;
+						if (num > i)
+							i = num;
 					}
 					else
 					{
@@ -72,16 +56,18 @@ namespace Game
 					}
 				}
 
-			m_blocks = new Block[x1 + 1];
-			m_fluidBlocks = new FluidBlock[x1 + 1];
-			foreach (var keyValuePair in dictionary)
+			m_blocks = new Block[i + 1];
+			m_fluidBlocks = new FluidBlock[i + 1];
+			
+			for (var e = dictionary.GetEnumerator(); e.MoveNext();)
 			{
+				var keyValuePair = e.Current;
 				m_blocks[keyValuePair.Key] = keyValuePair.Value;
 				m_fluidBlocks[keyValuePair.Key] = keyValuePair.Value as FluidBlock;
 			}
-			for (var index = 0; index < m_blocks.Length; ++index)
-				if (m_blocks[index] == null)
-					m_blocks[index] = Blocks[0];
+			for (i = 0; i < m_blocks.Length; ++i)
+				if (m_blocks[i] == null)
+					m_blocks[i] = Blocks[0];
 			var data = ContentManager.Get<string>("BlocksData");
 			ContentManager.Dispose("BlocksData");
 			LoadBlocksData(data);
@@ -95,16 +81,16 @@ namespace Game
 				}
 				catch (Exception e)
 				{
-					Log.Warning(string.Format("\"{0}\": {1}", enumerator.Current.Filename, e));
+					ModsManager.ErrorHandler(enumerator.Current, e);
 				}
 				finally
 				{
 					reader.Dispose();
 				}
 			}
-			for (int i = 0, length = Blocks.Length; i < length; i++) {
+			i = 0;
+			for (int length = Blocks.Length; i < length; i++)
 				Blocks[i].Initialize();
-			}
 			m_categories.Add("Terrain");
 			m_categories.Add("Plants");
 			m_categories.Add("Construction");
@@ -117,23 +103,24 @@ namespace Game
 			m_categories.Add("Painted");
 			m_categories.Add("Dyed");
 			m_categories.Add("Fireworks");
-			foreach (var block in Blocks)
-			foreach (var creativeValue in block.GetCreativeValues())
+			for (i = 0; i < Blocks.Length; i++)
 			{
-				var category = block.GetCategory(creativeValue);
-				if (!m_categories.Contains(category))
-					m_categories.Add(category);
+				var block = Blocks[i];
+				for (var j = block.GetCreativeValues().GetEnumerator(); j.MoveNext();)
+				{
+					var category = block.GetCategory(j.Current);
+					if (!m_categories.Contains(category))
+						m_categories.Add(category);
+				}
 			}
 		}
 		public static IEnumerable<TypeInfo> GetBlockTypes()
 		{
 			var list = new List<TypeInfo>();
-			list.AddRange(typeof(BlocksManager).GetTypeInfo().Assembly.DefinedTypes);
-			var enumerator = ModsManager.LoadedAssemblies.GetEnumerator();
+			list.AddRange(typeof(BlocksManager).Assembly.DefinedTypes);
+			var enumerator = TypeCache.LoadedAssemblies.GetEnumerator();
 			while (enumerator.MoveNext())
-			{
 				list.AddRange(enumerator.Current.DefinedTypes);
-			}
 			return list;
 		}
 
@@ -227,10 +214,7 @@ namespace Game
 		{
 			environmentData = environmentData ?? m_defaultEnvironmentData;
 			if (!isEmissive)
-			{
-				var s = LightingManager.LightIntensityByLightValue[environmentData.Light];
-				color = Color.MultiplyColorOnly(color, s);
-			}
+				color = Color.MultiplyColorOnly(color, LightingManager.LightIntensityByLightValue[environmentData.Light]);
 
 			var translation = matrix.Translation;
 			Vector3 v2;
@@ -355,9 +339,9 @@ namespace Game
 				else
 				{
 					var color1 = new Color((byte) (blockMeshVertex.Color.R * (double) vector4.X),
-						(byte) (blockMeshVertex.Color.G * (double) vector4.Y),
-						(byte) (blockMeshVertex.Color.B * (double) vector4.Z),
-						(byte) (blockMeshVertex.Color.A * (double) vector4.W));
+						(byte)(blockMeshVertex.Color.G * (double) vector4.Y),
+						(byte)(blockMeshVertex.Color.B * (double) vector4.Z),
+						(byte)(blockMeshVertex.Color.A * (double) vector4.W));
 					triangleVertices.Array[count4++] = new VertexPositionColorTexture(blockMeshVertex.Position, color1,
 						blockMeshVertex.TextureCoordinates);
 				}
@@ -375,7 +359,7 @@ namespace Game
 			var block = Blocks[Terrain.ExtractContents(value)];
 			if (block.Durability < 0)
 				return value;
-			var damage = block.GetDamage(value) + damageCount;
+			int damage = block.GetDamage(value) + damageCount;
 			if (damage <= block.Durability)
 				return block.SetDamage(value, damage);
 			return block.GetDamageDestructionValue(value);
@@ -385,7 +369,7 @@ namespace Game
 		{
 			data = data.Replace("\r", string.Empty);
 			var strArray1 = data.Split(new char[1] {'\n'}, StringSplitOptions.RemoveEmptyEntries);
-			var strArray2 = (string[]) null;
+			string[] strArray2 = null;
 			for (var index1 = 0; index1 < strArray1.Length; ++index1)
 			{
 				var strArray3 = strArray1[index1].Split(';');
@@ -416,11 +400,10 @@ namespace Game
 							var data1 = strArray3[index2];
 							if (!string.IsNullOrEmpty(data1))
 							{
-								FieldInfo fieldInfo;
-								if (!dictionary2.TryGetValue(key2, out fieldInfo))
+								if (!dictionary2.TryGetValue(key2, out FieldInfo fieldInfo))
 									throw new InvalidOperationException(string.Format(
 										"Field \"{0}\" not found or not accessible when loading block data.",
-										new object[1] {key2}));
+										new object[1] { key2 }));
 								object obj;
 								if (data1.StartsWith("#"))
 								{
@@ -461,8 +444,8 @@ namespace Game
 
 		public static Vector4 TextureSlotToTextureCoords(int slot)
 		{
-			var num1 = slot % 16;
-			var num2 = slot / 16;
+			int num1 = slot % 16;
+			int num2 = slot / 16;
 			return new Vector4((float) ((num1 + 1.0 / 1000.0) / 16.0), (float) ((num2 + 1.0 / 1000.0) / 16.0),
 				(float) ((num1 + 1 - 1.0 / 1000.0) / 16.0), (float) ((num2 + 1 - 1.0 / 1000.0) / 16.0));
 		}

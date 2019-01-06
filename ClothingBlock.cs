@@ -1,6 +1,5 @@
 using Engine;
 using Engine.Graphics;
-using System;
 using System.Collections.Generic;
 using System.Xml.Linq;
 using XmlUtilities;
@@ -17,8 +16,9 @@ namespace Game
 		{
 			var num = 0;
 			var dictionary = new Dictionary<int, ClothingData>();
-			foreach (var element in ContentManager.ConbineXElements(ContentManager.Get<XElement>("Clothes"), ModsManager.GetEntries(".clo"), "Index", "DisplayName", "Clothes").Elements())
+			for (var i = ContentManager.CombineXml(ContentManager.Get<XElement>("Clothes"), ModsManager.GetEntries(".clo"), "Index", "DisplayName", "Clothes").Elements().GetEnumerator(); i.MoveNext();)
 			{
+				var element = i.Current;
 				var clothingData = new ClothingData
 				{
 					Index = XmlUtils.GetAttributeValue<int>(element, "Index"),
@@ -43,14 +43,15 @@ namespace Game
 			}
 
 			m_clothingData = new ClothingData[dictionary.Count];
-			for (var index = 0; index < dictionary.Count; ++index)
+			int index;
+			for (index = 0; index < dictionary.Count; ++index)
 				m_clothingData[index] = dictionary[index];
 			var playerModel = CharacterSkinsManager.GetPlayerModel(PlayerClass.Male);
 			var absoluteTransforms1 = new Matrix[playerModel.Bones.Count];
 			playerModel.CopyAbsoluteBoneTransformsTo(absoluteTransforms1);
-			var index1 = playerModel.FindBone("Hand1", true).Index;
-			var index2 = playerModel.FindBone("Hand2", true).Index;
-			absoluteTransforms1[index1] = Matrix.CreateRotationY(0.1f) * absoluteTransforms1[index1];
+			index = playerModel.FindBone("Hand1", true).Index;
+			int index2 = playerModel.FindBone("Hand2", true).Index;
+			absoluteTransforms1[index] = Matrix.CreateRotationY(0.1f) * absoluteTransforms1[index];
 			absoluteTransforms1[index2] = Matrix.CreateRotationY(-0.1f) * absoluteTransforms1[index2];
 			m_innerMesh = new BlockMesh();
 			foreach (var mesh in playerModel.Meshes)
