@@ -332,7 +332,13 @@ namespace Game
 							while ((str = reader.ReadLine()) != null && str.Length != 0)
 							{
 #if ENV_ANDROID
-								var name = str.Remove(str.IndexOf('\t'));
+								var name = str.
+#if Bugs
+									Substring(0,
+#else
+									Remove(
+#endif
+									str.IndexOf('\t'));
 								var time = File.GetLastWriteTimeUtc(Combine(ContentManager.Path, name));
 								if (time != notExist && time.ToString() == str.Substring(str.IndexOf('\t') + 1))
 									CachedMods.Add(name);
@@ -447,7 +453,13 @@ namespace Game
 			StreamWriter writer = null;
 			try
 			{
-				writer = new StreamWriter(Combine(ContentManager.Path, "mods.cfg"), false);
+				writer = new StreamWriter(
+#if ENV_ANDROID && Bugs
+					File.Open(Combine(ContentManager.Path, "mods.cfg"), FileMode.Create)
+#else
+					Combine(ContentManager.Path, "mods.cfg"), false
+#endif
+					);
 				writer.WriteLine("Ver 1.1");
 				writer.Write("Flags:");
 				if (ReadZip) writer.Write(" " + nameof(ReadZip));

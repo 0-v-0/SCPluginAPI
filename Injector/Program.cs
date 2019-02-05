@@ -1,3 +1,6 @@
+#define Survivalcraft
+//#define Bugs
+
 #region Using directives
 using System;
 using System.Linq;
@@ -312,10 +315,12 @@ namespace SCInjector
 		{
 			return m.Name == TargetName;
 		}
+#if Survivalcraft
 		static bool IsNotT(MemberReference m)
 		{
 			return m.Name != "DecodeIngredient";
 		}
+#endif
 		static bool IsTarget(TypeDefinition t)
 		{
 			if (t.Namespace.Length != 4) //if (t.Namespace != "Game")
@@ -332,7 +337,15 @@ namespace SCInjector
 			}
 			var asmDef = AssemblyDefinition.ReadAssembly(args[0]);
 			Collection<TypeDefinition> types;
-			if (Path.GetFileNameWithoutExtension(args[0]) == "Survivalcraft")
+			if (Path.GetFileNameWithoutExtension(args[0]) ==
+#if Survivalcraft
+				"Survivalcraft"
+#elif Bugs
+				"Bugs"
+#else
+				"RuthlessConquest"
+#endif
+				)
 			{
 				types = AssemblyDefinition.ReadAssembly("mscorlib.dll").MainModule.Types;
 				var p = new PluginPatch(asmDef.MainModule, types.Concat(AssemblyDefinition.ReadAssembly("System.Core.dll").MainModule.Types));
@@ -345,8 +358,14 @@ namespace SCInjector
 							p.Apply(enumerator.Current.Methods);
 				}
 				finally { enumerator.Dispose(); }
-				var typenames = ("BlocksManager,CharacterSkinsManager,DatabaseManager,DialogsManager,ExternalContentManager,LightingManager,"+
-					"GameManager,MotdManager,MusicManager,PlantsManager,PlayerData,SettingsManager,StringsManager").Split(',');
+				var typenames = (
+#if Survivalcraft
+					"BlocksManager,CharacterSkinsManager,DatabaseManager,DialogsManager,ExternalContentManager,LightingManager,"+
+					"GameManager,MotdManager,MusicManager,PlantsManager,PlayerData,SettingsManager,StringsManager"
+#elif Bugs
+					"GameManager,GamesManager"
+#endif
+					).Split(',');
 				for (int i = typenames.Length; i-- > 0;)
 				{
 					/*int index;
@@ -355,25 +374,43 @@ namespace SCInjector
 					else*/
 					p.Apply(types.FindType(typenames[i]).Methods.Where(IsTarget));
 				}
-				var init = types.FindMethod("ScreensManager", "Initialize");
+				var init = types.FindMethod(
+#if Bugs
+					"FrontendManager"
+#else
+					"ScreensManager"
+#endif
+					, "Initialize");
 				p.Apply(new[]
 				{
+#if !RuthlessConquest
+#if Survivalcraft
 					types.FindMethod("AudioManager", "PlaySound"),
 					types.FindMethod("BlocksTexturesManager", "ValidateBlocksTexture"),
+#endif
 					types.FindMethod("ContentManager", "CombineXml"),
 					types.FindType("ContentManager").Methods.First(IsGet),
+#if Survivalcraft
 					types.FindMethod("FurnitureDesign", "CreateGeometry"),
 					types.FindMethod("FurnitureDesign", "Resize"),
 					types.FindMethod("FurnitureDesign", "SetValues"),
 					types.FindMethod("InventorySlotWidget", ".ctor"),
+#endif
+#endif
+#if !Bugs
 					types.FindMethod("PerformanceManager", "Draw"),
+#endif
 					init,
+#if Survivalcraft
 					types.FindMethod("TerrainUpdater","GenerateChunkVertices")
+#endif
 				});
 				init.IsRuntimeSpecialName = true;
 				p.Apply(new[] { init });
 				init.IsRuntimeSpecialName = false;
+#if Survivalcraft
 				p.Apply(types.FindType("CraftingRecipesManager").Methods.Where(IsNotT));
+#endif
 				File.WriteAllText("methods.txt", p.Lst.ToString());
 			}
 			PluginPatch.Optimize(asmDef.MainModule.Types);

@@ -20,7 +20,14 @@ namespace Game
 		{
 			Directory.CreateDirectory(Path =
 #if ENV_ANDROID
-				ModsManager.Combine(Android.OS.Environment.ExternalStorageDirectory.AbsolutePath, "Survivalcraft/Mods")
+
+#if Survivalcraft
+				ModsManager.Combine(Android.OS.Environment.ExternalStorageDirectory.AbsolutePath, "Survivalcraft/Mods"))
+#elif Bugs
+				"/sdcard/Bugs/Mods"
+#else
+				"/sdcard/RuthlessConquest/Mods"
+#endif
 #elif USE_DATA_PATH
 				Storage.GetSystemPath("data:Mods")
 #else
@@ -91,7 +98,12 @@ namespace Game
 			{
 				try
 				{
-					var xml = XmlUtils.LoadXmlFromStream(enumerator.Current.Stream, null, true);
+					var xml =
+#if Bugs
+						XElement.Load(enumerator.Current.Stream);
+#else
+						XmlUtils.LoadXmlFromStream(enumerator.Current.Stream, null, true);
+#endif
 					Modify(node, xml, attr1, attr2, type);
 				}
 				catch (Exception e)
@@ -122,7 +134,13 @@ namespace Game
 				var guid = attr?.Value;
 				attr = node.Attribute(attr2);
 				var name = attr?.Value;
-				int startIndex = nn.Length >= 2 && nn[0] == 'r' && nn[1] == '-' ? node.IsEmpty ? 2 : -2 : 0;
+				int startIndex = nn.Length >= 2 && nn[0] == 'r' && nn[1] == '-' ? node.
+#if Bugs
+					HasElements
+#else
+					IsEmpty
+#endif
+					? 2 : -2 : 0;
 				var enumerator2 = dst.DescendantsAndSelf(nn.Length == 2 && startIndex != 0 ? type : node.Name.LocalName.Substring(Math.Abs(startIndex))).GetEnumerator();
 				while (enumerator2.MoveNext())
 				{
