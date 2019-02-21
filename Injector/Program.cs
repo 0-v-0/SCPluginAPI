@@ -395,6 +395,7 @@ namespace SCInjector
 					types.FindMethod("FurnitureDesign", "Resize"),
 					types.FindMethod("FurnitureDesign", "SetValues"),
 					types.FindMethod("InventorySlotWidget", ".ctor"),
+					//types.FindMethod("MessageDialog", ".ctor"),
 #endif
 #endif
 #if !Bugs
@@ -402,6 +403,7 @@ namespace SCInjector
 #endif
 					init,
 #if Survivalcraft
+					//types.FindMethod("TerrainChunk", ".ctor"),
 					types.FindMethod("TerrainUpdater","GenerateChunkVertices")
 #endif
 				});
