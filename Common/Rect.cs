@@ -18,8 +18,8 @@ namespace Game
 			}
 			set
 			{
-				this.X = value.X;
-				this.Y = value.Y;
+				X = value.X;
+				Y = value.Y;
 			}
 		}
 		public Point2 Size
@@ -30,8 +30,8 @@ namespace Game
 			}
 			set
 			{
-				this.Width = value.Width;
-				this.Height = value.Height;
+				Width = value.Width;
+				Height = value.Height;
 			}
 		}
 		public Rect(int x, int y, int length)
@@ -55,7 +55,7 @@ namespace Game
 			Width = size.X;
 			Height = size.Y;
 		}
-		public static Rectangle Create()
+		public static Rectangle Create(Vector4 v)
 		{
 
 		}
@@ -75,26 +75,6 @@ namespace Game
 		{
 			return other.Width == this.Width && other.Height == this.Height;
 		}
-		public static Rect Add(Rect a, Rect b)
-		{
-			return new Rect(a.X, a.Y, a.Width + b.Width, a.Height + b.Height);
-		}
-		public static Rect Subtract(Rect a, Rect b)
-		{
-			return new Rect(a.X, a.Y, a.Width - b.Width, a.Height - b.Height);
-		}
-		public static Rect operator +(Rect a, Rect b)
-		{
-			return Rect.Add(a, b);
-		}
-		public static Rect operator -(Rect a)
-		{
-			return new Rect(-a.X, -a.Y, a.Size);
-		}
-		public static Rect operator -(Rect a, Rect b)
-		{
-			return Rect.Subtract(a, b);
-		}
 		public bool Contains(int x, int y)
 		{
 			return this.X <= x && x < this.X + this.Width && this.Y <= y && y < this.Y + this.Height;
@@ -103,15 +83,19 @@ namespace Game
 		{
 			return Contains(p.X, p.Y);
 		}
-		public bool Contains(Point3 p)
+		public static bool Contains(this Rectangle r, Point3 p)
 		{
-			return Contains(p.X, p.Z);
+			return r.Contains(new Point2(p.X, p.Z));
 		}
 		public bool Contains(Rect rect)
 		{
 			return this.X <= rect.X && rect.X + rect.Width <= this.X + this.Width && this.Y <= rect.Y && rect.Y + rect.Height <= this.Y + this.Height;
-		}
-		public override int GetHashCode()
+        }
+        public static bool Contains(this Rectangle r, Rectangle rect)
+        {
+            return r.Left <= rect.Left && rect.Left + rect.Width <= r.Left + r.Width && r.Top <= rect.Top && rect.Top + rect.Height <= r.Top + r.Height;
+        }
+        public override int GetHashCode()
 		{
 			return this.X ^ (this.Y << 13 | (int)((uint)this.Y >> 19)) ^ (this.Width << 26 | (int)((uint)this.Width >> 6)) ^ (this.Height << 7 | (int)((uint)this.Height >> 25));
 		}

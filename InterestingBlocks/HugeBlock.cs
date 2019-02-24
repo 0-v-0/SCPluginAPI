@@ -5,7 +5,7 @@ namespace Game
 {
 	public class HugeBlock : MagicBlock
 	{
-		public new const int Index = 323;
+		public new const int Index = 327;
 
 		public override void DrawBlock(PrimitivesRenderer3D primitivesRenderer, int value, Color color, float size, ref Matrix matrix, DrawBlockEnvironmentData environmentData)
 		{

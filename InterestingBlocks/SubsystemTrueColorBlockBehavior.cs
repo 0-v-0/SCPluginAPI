@@ -221,7 +221,7 @@ namespace Game
 					var cellFace = raycastResult.Value.CellFace;
 					if (SubsystemTerrain.Terrain.GetCellContents(px = cellFace.X, py = cellFace.Y, pz = cellFace.Z) == TargetBlock.Index)
 					{
-						Direction = cellFace.Face >= 4;
+						Direction = cellFace.Face;
 						DialogsManager.ShowDialog(componentMiner.ComponentPlayer.View.GameWidget, new TextBoxDialog("Enter file name", null, 250, DrawPic));
 					}
 					DialogsManager.ShowDialog(componentMiner.ComponentPlayer.View.GameWidget, new TextBoxDialog("Enter furniture resolution", null, 3, DrawPic));

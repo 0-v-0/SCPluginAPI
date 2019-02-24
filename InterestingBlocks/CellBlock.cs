@@ -7,12 +7,12 @@ namespace Game
 {
 	public class Cell2DBlock : MagicBlock
 	{
-		public new const int Index = 321;
+		public new const int Index = 325;
 	}
 
 	public class Cell3DBlock : MagicBlock
 	{
-		public new const int Index = 322;
+		public new const int Index = 326;
 	}
 
 	public struct CellState : IEquatable<CellState>

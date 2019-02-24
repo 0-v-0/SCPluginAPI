@@ -10,7 +10,7 @@ namespace Game
 	[PluginLoader("", "", 0)]
 	public class MagicBlock : Block
 	{
-		public const int Index = 320;
+		public const int Index = 324;
 
 		public static new void Initialize()
 		{
