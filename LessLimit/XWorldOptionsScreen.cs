@@ -7,18 +7,13 @@ namespace Game
 {
 	public class XWorldOptionsScreen : WorldOptionsScreen
 	{
+		public static WorldOptionsScreen WorldOptionsScreen;
 		public void SelectionHandler(object e)
 		{
-			//if (m_worldSettings.GameMode != 0 && (TerrainGenerationMode)e == TerrainGenerationMode.Flat)
-			//{
-			//	DialogsManager.ShowDialog(null, new MessageDialog("Unavailable", "Flat terrain is only available in Creative Mode", "OK", null, null));
-			//}
-			//else
-			//{
 			m_worldSettings.TerrainGenerationMode = (TerrainGenerationMode)e;
 			m_descriptionLabel.Text = StringsManager.GetString("TerrainGenerationMode." + m_worldSettings.TerrainGenerationMode + ".Description");
-			//}
 		}
+
 		public static string GetName(object e)
 		{
 			return ((TerrainGenerationMode)e).ToString();
@@ -42,20 +37,20 @@ namespace Game
 				var arr = new int[255];
 				for (int i = 0; i < 255; i++)
 					arr[i] = i;
-				DialogsManager.ShowDialog(null, new ListSelectionDialog("Select Block", arr, 72f, delegate(object index)
+				DialogsManager.ShowDialog(null, new ListSelectionDialog("Select Block", arr, 72f, delegate (object index)
 				{
 					var obj = (ContainerWidget)WidgetsManager.LoadWidget(null, ContentManager.Get<XElement>("Widgets/SelectBlockItem"), null);
 					obj.Children.Find<BlockIconWidget>("SelectBlockItem.Block", true).Contents = (int)index;
 					obj.Children.Find<LabelWidget>("SelectBlockItem.Text", true).Text = BlocksManager.Blocks[(int)index].GetDisplayName(null, Terrain.MakeBlockValue((int)index));
 					return obj;
-				}, delegate(object index)
+				}, delegate (object index)
 				{
 					m_worldSettings.TerrainBlockIndex = (int)index;
 				}));
 			}
 			if (m_flatTerrainMagmaOceanCheckbox.IsClicked)
 			{
-				m_worldSettings.TerrainOceanBlockIndex = (m_worldSettings.TerrainOceanBlockIndex == 18) ? 92 : 18;
+				m_worldSettings.TerrainOceanBlockIndex = m_worldSettings.TerrainOceanBlockIndex == 18 ? 92 : 18;
 				m_descriptionLabel.Text = StringsManager.GetString("FlatTerrainMagmaOcean.Description");
 			}
 			if (m_seaLevelOffsetSlider.IsSliding /*&& !m_isExistingWorld*/)
@@ -81,7 +76,7 @@ namespace Game
 			if (m_blocksTextureButton.IsClicked)
 			{
 				BlocksTexturesManager.UpdateBlocksTexturesList();
-				DialogsManager.ShowDialog(null, new ListSelectionDialog("Select Blocks Texture", BlocksTexturesManager.BlockTexturesNames, 64f, delegate(object item)
+				DialogsManager.ShowDialog(null, new ListSelectionDialog("Select Blocks Texture", BlocksTexturesManager.BlockTexturesNames, 64f, delegate (object item)
 				{
 					var containerWidget = (ContainerWidget)WidgetsManager.LoadWidget(this, ContentManager.Get<XElement>("Widgets/BlocksTextureItem"), null);
 					Texture2D texture2 = m_blockTexturesCache.GetTexture((string)item);
@@ -93,7 +88,7 @@ namespace Game
 					});
 					containerWidget.Children.Find<RectangleWidget>("BlocksTextureItem.Icon", true).Subtexture = new Subtexture(texture2, Vector2.Zero, Vector2.One);
 					return containerWidget;
-				}, delegate(object item)
+				}, delegate (object item)
 				{
 					m_worldSettings.BlocksTextureName = (string)item;
 				}));
@@ -154,7 +149,7 @@ namespace Game
 			Texture2D texture = m_blockTexturesCache.GetTexture(m_worldSettings.BlocksTextureName);
 			m_blocksTextureIcon.Subtexture = new Subtexture(texture, Vector2.Zero, Vector2.One);
 			m_blocksTextureLabel.Text = BlocksTexturesManager.GetDisplayName(m_worldSettings.BlocksTextureName);
-			m_blocksTextureDetails.Text = string.Format("{0}x{1}", new object[2]
+			m_blocksTextureDetails.Text = string.Format("{0}x{1}", new object[]
 			{
 				texture.Width,
 				texture.Height
@@ -175,6 +170,14 @@ namespace Game
 			m_supernaturalCreaturesButton.Text = m_worldSettings.AreSupernaturalCreaturesEnabled ? "Enabled" : "Disabled";
 			if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back", true).IsClicked)
 				ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
+		}
+
+		public override void Leave()
+		{
+			if (WorldOptionsScreen == null)
+				WorldOptionsScreen = new WorldOptionsScreen();
+			ScreensManager.PreviousScreen = WorldOptionsScreen;
+			base.Leave();
 		}
 	}
 }

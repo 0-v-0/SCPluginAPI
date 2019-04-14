@@ -102,7 +102,7 @@ namespace Game
 		public Widget GetItem(object item)
 		{
 			XElement node = ContentManager.Get<XElement>("Widgets/CharacterSkinItem");
-			ContainerWidget obj = (ContainerWidget)WidgetsManager.LoadWidget(this, node, null);
+			var obj = (ContainerWidget)WidgetsManager.LoadWidget(this, node, null);
 			Texture2D texture = m_characterSkinsCache.GetTexture((string)item);
 			obj.Children.Find<LabelWidget>("CharacterSkinItem.Text").Text = CharacterSkinsManager.GetDisplayName((string)item);
 			obj.Children.Find<LabelWidget>("CharacterSkinItem.Details").Text = $"{texture.Width}x{texture.Height}";
@@ -121,7 +121,7 @@ namespace Game
 
 		public void SelectionHandler(object d)
 		{
-			WidgetInputDevice widgetInputDevice = (WidgetInputDevice)d;
+			var widgetInputDevice = (WidgetInputDevice)d;
 			m_playerData.InputDevice = widgetInputDevice;
 			foreach (PlayerData playersDatum in m_playerData.SubsystemPlayers.PlayersData)
 			{

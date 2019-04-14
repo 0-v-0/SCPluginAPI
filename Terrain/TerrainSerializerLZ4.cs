@@ -344,7 +344,7 @@ namespace Game
 				if (flag)
 				{
 					m_stream.Flush();
-					int num5 = m_chunkOffsets.Count % 65536 * 3 * 4;
+					int num5 = (m_chunkOffsets.Count & 65535) * 3 * 4;
 					m_stream.Seek(num5, SeekOrigin.Begin);
 					WriteInt(m_stream, num);
 					WriteInt(m_stream, num2);

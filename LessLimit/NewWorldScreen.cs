@@ -2,18 +2,6 @@ namespace Game
 {
 	public class XNewWorldScreen : NewWorldScreen
 	{
-		public override void Enter(object[] parameters)
-		{
-			if (ScreensManager.PreviousScreen.GetType() != typeof(XWorldOptionsScreen))
-			{
-				m_worldSettings = new WorldSettings
-				{
-					Name = WorldsManager.NewWorldNames[m_random.UniformInt(0, WorldsManager.NewWorldNames.Count - 1)],
-					OriginalSerializationVersion = VersionsManager.SerializationVersion
-				};
-			}
-		}
-
 		public override void Update()
 		{
 			if (m_gameModeButton.IsClicked)

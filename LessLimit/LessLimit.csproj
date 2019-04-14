@@ -67,18 +67,14 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="zh-cn">
-      <HintPath>D:\Survivalcraft\zh-cn.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="LastBlock.cs" />
     <Compile Include="PlayScreen.cs" />
     <Compile Include="SubsystemAdjustableElectricity.cs" />
+    <Compile Include="SubsystemAdjustableFluidBlockBehavior.cs" />
     <Compile Include="SubsystemUnlimitedPlayers.cs" />
     <Compile Include="UnlimitedGamesWidget.cs" />
-    <Compile Include="XModifyWorldScreen.cs" />
     <Compile Include="XPlayerScreen.cs" />
     <Compile Include="XPlayersScreen.cs" />
     <Compile Include="XWorldOptionsScreen.cs" />

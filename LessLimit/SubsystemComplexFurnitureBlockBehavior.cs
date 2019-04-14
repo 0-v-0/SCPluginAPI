@@ -13,19 +13,11 @@ namespace Game
 			int num = 0;
 			num += m_design.Geometry.SubsetOpaqueByFace.Sum(delegate (BlockMesh b)
 			{
-				if (b == null)
-				{
-					return 0;
-				}
-				return b.Indices.Count / 3;
+				return b == null ? 0 : b.Indices.Count / 3;
 			});
 			num += m_design.Geometry.SubsetAlphaTestByFace.Sum(delegate (BlockMesh b)
 			{
-				if (b == null)
-				{
-					return 0;
-				}
-				return b.Indices.Count / 3;
+				return b == null ? 0 : b.Indices.Count / 3;
 			});
 			m_isValid = num <= 65536;
 			m_statusLabel.Text = string.Format("Complexity {0}/{1}{2}", num, 65536, m_isValid ? " (OK)" : " (too complex)");
@@ -52,7 +44,7 @@ namespace Game
 			m_buildButton.IsEnabled = m_isValid;
 			if (m_nameButton.IsClicked)
 			{
-				List<Tuple<string, Action>> list = new List<Tuple<string, Action>>();
+				var list = new List<Tuple<string, Action>>();
 				if (m_sourceDesign != null)
 				{
 					list.Add(new Tuple<string, Action>("Rename Original Furniture", Update_b__23_0));
@@ -139,7 +131,7 @@ namespace Game
 				var face = nullable.Value.CellFace;
 				FurnitureDesign design = null;
 				FurnitureDesign furnitureDesign = null;
-				var valuesDictionary = new Dictionary<Point3, int>();
+				valuesDictionary = new Dictionary<Point3, int>();
 				Point3 point = face.Point;
 				Point3 point2 = face.Point;
 				Point = point;

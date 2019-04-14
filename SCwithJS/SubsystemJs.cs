@@ -6,7 +6,7 @@ namespace Game
 	public class SubsystemJs : SubsystemBlockBehavior
 	{
 		public static Jint.Engine JsEngine;
-        public static ComponentPlayer ComponentPlayer;
+		public static ComponentPlayer ComponentPlayer;
 		protected static string lastcode = "";
 
 		public override int[] HandledBlocks => new int[0];

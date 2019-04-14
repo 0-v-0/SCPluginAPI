@@ -1,13 +1,10 @@
 ﻿using Engine;
 using GameEntitySystem;
-using TemplatesDatabase;
 
 namespace Game
 {
 	public class SubsystemUnlimitedBoatBlockBehavior : SubsystemBoatBlockBehavior
 	{
-		//public static bool AreSeasonsEnabled;
-
 		public override bool OnUse(Vector3 start, Vector3 direction, ComponentMiner componentMiner)
 		{
 			if (Terrain.ExtractContents(componentMiner.ActiveBlockValue) == 178)
@@ -28,14 +25,5 @@ namespace Game
 			}
 			return false;
 		}
-
-		/*public override void Load(ValuesDictionary valuesDictionary)
-		{
-			base.Load(valuesDictionary);
-		}
-
-		public override void OnChunkInitialized(TerrainChunk chunk)
-		{
-		}*/
 	}
 }

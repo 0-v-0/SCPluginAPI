@@ -42,7 +42,7 @@ namespace Game
 				else
 					m_outOfMountTime = 0f;
 				ComponentHealth componentHealth = mount.Entity.FindComponent<ComponentHealth>();
-				if (m_outOfMountTime > 0.1f || (componentHealth != null && componentHealth.Health <= 0f) || ComponentCreature.ComponentHealth.Health <= 0f)
+				if (m_outOfMountTime > 0.1f || (componentHealth != null && componentHealth.Health <= 0f && componentHealth.FallResilience < 1e8f) || (ComponentCreature.ComponentHealth.Health <= 0f && ComponentCreature.ComponentBody.BoxSize.X > 0.1f))
 					StartDismounting();
 				ComponentCreature.ComponentBody.ParentBodyPositionOffset = mount.MountOffset + m_riderOffset;
 				ComponentCreature.ComponentBody.ParentBodyRotationOffset = Quaternion.Identity;

@@ -88,7 +88,7 @@ namespace Game
 
 		public void SetPeriod(string s)
 		{
-			if(!string.IsNullOrWhiteSpace(s))
+			if (!string.IsNullOrWhiteSpace(s))
 				SubsystemAdjustableElectricity.UpdatePeriod = float.Parse(s.Trim(), CultureInfo.CurrentCulture);
 		}
 	}

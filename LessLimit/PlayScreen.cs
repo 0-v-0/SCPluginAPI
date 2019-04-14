@@ -23,7 +23,7 @@
 			}
 			if (Children.Find<ButtonWidget>("Properties").IsClicked && m_worldsListWidget.SelectedItem != null)
 			{
-				WorldInfo worldInfo = (WorldInfo)m_worldsListWidget.SelectedItem;
+				var worldInfo = (WorldInfo)m_worldsListWidget.SelectedItem;
 				ScreensManager.SwitchScreen("ModifyWorld", worldInfo.DirectoryName, worldInfo.WorldSettings);
 			}
 			if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back").IsClicked)

@@ -8,7 +8,7 @@ using System;
 using System.IO;
 using TemplatesDatabase;
 
-[PluginLoader("LessLimit", "Less limit, more flexible", 0)]
+[PluginLoader("LessLimit", "Less limit, more flexible", 1)]
 public class LastBlock : CubeBlock
 {
 	public const int Index = 1023;
@@ -43,6 +43,7 @@ public class LastBlock : CubeBlock
 		if (AlwaysActive)
 			Window.Deactivated += Active;
 		ModsManager.ConfigSaved += SaveConfig;
+		ExternalContentManager.VerifyExternalContentName1 = VerifyExternalContentName;
 	}
 
 	public static void SaveConfig(StreamWriter writer)
@@ -100,6 +101,41 @@ public class LastBlock : CubeBlock
 	public static void SetPlayerClass(PlayerData data, PlayerClass value)
 	{
 		data.m_playerClass = value;
+	}
+
+	public static Exception VerifyExternalContentName(string name)
+	{
+		if (string.IsNullOrEmpty(name))
+		{
+			return new InvalidOperationException(
+#if zh_cn
+				"名称为空"
+#else
+				"Name empty."
+#endif
+				);
+		}
+		if (name.Length > 50)
+		{
+			return new InvalidOperationException(
+#if zh_cn
+				"名称太长，最多允许50字符"
+#else
+				"Name too long. Maximum 50 characters allowed."
+#endif
+				);
+		}
+		if (name[0] == ' ' || name[name.Length - 1] == ' ')
+		{
+			return new InvalidOperationException(
+#if zh_cn
+				"名称开头或结尾不能有空格"
+#else
+				"Name cannot start or end with a space."
+#endif
+				);
+		}
+		return null;
 	}
 
 	public static void ValidateBlocksTexture(Stream stream)
@@ -260,7 +296,6 @@ public class LastBlock : CubeBlock
 	public static void ReplaceScreen()
 	{
 		ScreensManager.m_screens["NewWorld"] = new XNewWorldScreen();
-		ScreensManager.m_screens["ModifyWorld"] = new XModifyWorldScreen();
 		ScreensManager.m_screens["Play"] = new XPlayScreen();
 		ScreensManager.m_screens["WorldOptions"] = new XWorldOptionsScreen();
 		ScreensManager.m_screens["Player"] = new XPlayerScreen();
