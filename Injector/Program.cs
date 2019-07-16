@@ -332,7 +332,7 @@ namespace SCInjector
 		{
 			if (args.Length == 0)
 			{
-				Console.WriteLine("Usage: SCInjector <in-file> [output]");
+				Console.WriteLine("Usage:\nTo inject: Injector Survivalcraft.dll or Survivalcraft.exe [output]\nTo optimize: Injector <in-file> [output]\n");
 				return;
 			}
 			var asmDef = AssemblyDefinition.ReadAssembly(args[0]);
