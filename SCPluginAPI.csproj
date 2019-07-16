@@ -96,9 +96,6 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="BlocksManager.cs" />
     <Compile Include="ClothingBlock.cs" />
     <Compile Include="ContentManager.cs" />
