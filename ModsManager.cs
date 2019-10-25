@@ -305,6 +305,7 @@ namespace Game
 			Directories = new List<string>();
 			LabelWidget.Strings = new Dictionary<string, string>();
 			ReadZip = true;
+			AutoCleanCache = true;
 			SearchDepth = 3;
 			ErrorHandler = LogException;
 			try
@@ -454,7 +455,7 @@ namespace Game
 			try
 			{
 				writer = new StreamWriter(
-#if ENV_ANDROID && Bugs
+#if ENV_ANDROID
 					File.Open(Combine(ContentManager.Path, "mods.cfg"), FileMode.Create)
 #else
 					Combine(ContentManager.Path, "mods.cfg"), false

@@ -22,7 +22,9 @@ namespace Game
 #if ENV_ANDROID
 
 #if Survivalcraft
-				ModsManager.Combine(Android.OS.Environment.ExternalStorageDirectory.AbsolutePath, "Survivalcraft/Mods"))
+				//ModsManager.Combine(Android.OS.Environment.ExternalStorageDirectory.AbsolutePath, "Survivalcraft/Mods"))
+				//ModsManager.Combine(((AndroidSdCardExternalContentProvider)ExternalContentManager.m_providers).m_rootDirectory, "Survivalcraft/Mods"))
+				"/sdcard/Survivalcraft/Mods"
 #elif Bugs
 				"/sdcard/Bugs/Mods"
 #else

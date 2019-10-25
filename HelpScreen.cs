@@ -92,7 +92,7 @@ namespace Game
 			else if (helpTopic.Name == "Gamepad")
 				DialogsManager.ShowDialog(null, new GamepadHelpDialog());
 			else
-				ScreensManager.SwitchScreen("HelpTopic", (object) helpTopic);
+				ScreensManager.SwitchScreen("HelpTopic", (object)helpTopic);
 		}
 	}
 }

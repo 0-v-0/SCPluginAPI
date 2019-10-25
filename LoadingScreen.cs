@@ -53,7 +53,7 @@ namespace Game
 				{
 					m_loadingFinished = true;
 					AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
-					ScreensManager.SwitchScreen("MainMenu", Array.Empty<object>());
+					ScreensManager.SwitchScreen("MainMenu");
 				}
 			}
 		}
