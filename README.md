@@ -4,4 +4,4 @@
 
 A Survivalcraft mod which can load external resources
 
-示例mod见mod分支，制作方法见build.md
+示例mod见mods分支，制作方法见build.md，mod制作教程见 https://www.yuque.com/u589148/wf2knt
